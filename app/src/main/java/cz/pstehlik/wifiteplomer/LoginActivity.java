@@ -1,4 +1,4 @@
-package com.appwidget.list;
+package cz.pstehlik.wifiteplomer;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
