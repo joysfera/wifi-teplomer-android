@@ -99,10 +99,17 @@ public class LoginActivity extends AppCompatActivity {
             // form field with an error.
             focusView.requestFocus();
         } else {
+            // save credentials
+            final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+            SharedPreferences.Editor e = teplotyPrefs.edit();
+            e.putString("login", login);
+            e.putString("pwd", password);
+            e.apply();
+
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(login, password);
+            mAuthTask = new UserLoginTask();
             mAuthTask.execute((Void) null);
         }
     }
@@ -133,35 +140,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
+     * Represents an asynchronous login task used to test the authentication
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mLogin;
-        private final String mPassword;
-
-        UserLoginTask(String email, String password) {
-            mLogin = email;
-            mPassword = password;
+        UserLoginTask() {
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            String data = AppWidgetViewsFactory.getTempData(mLogin, mPassword);
-
+            String data = AppWidgetViewsFactory.getTempData(getApplicationContext());
             // test if returned valid JSON
-            if (!data.startsWith("{\"cidla"))
-                return false;
-
-            // save working credentials
-            final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
-            SharedPreferences.Editor e = teplotyPrefs.edit();
-            e.putString("login", mLogin);
-            e.putString("pwd", mPassword);
-            e.apply();
-
-            return true;
+            return (data.startsWith("{\"cidla"));
         }
 
         @Override
@@ -191,4 +181,3 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 }
-
