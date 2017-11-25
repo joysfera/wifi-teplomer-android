@@ -1,5 +1,7 @@
 package com.appwidget.list;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -9,9 +11,6 @@ import android.text.Html;
 import android.view.View;
 import android.widget.TextView;
 
-import static android.text.Html.FROM_HTML_MODE_COMPACT;
-import static android.text.Html.FROM_HTML_MODE_LEGACY;
-
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -20,23 +19,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+    }
 
-        TextView textView = (TextView) findViewById(R.id.description);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            textView.setText(Html.fromHtml(getString(R.string.description), FROM_HTML_MODE_COMPACT));
-        } else {
-            textView.setText(Html.fromHtml(getString(R.string.description)));
-        }
-/*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-*/
+    public void visitWeb(View view) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse("https://teploty.info/"));
+        startActivity(intent);
+    }
+
+    public void configureLogin(View view) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
+    }
+
+    public void byeBye(View view) {
+        finish();
     }
 
 }
