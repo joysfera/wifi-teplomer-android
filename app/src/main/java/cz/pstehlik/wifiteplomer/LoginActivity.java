@@ -54,6 +54,12 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+        final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+        final String login = teplotyPrefs.getString("login", "");
+        final String pwd = teplotyPrefs.getString("pwd", "");
+        mLoginView.setText(login);
+        mPasswordView.setText(pwd);
+
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override

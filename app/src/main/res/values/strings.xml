@@ -14,5 +14,5 @@
     <string name="error_field_required">Jméno je nutno vyplnit</string>
     <string name="description1">Tato aplikace slouží jako šikovný doplněk WiFi Teploměrů a serveru Teploty.info. Pokud nemáte WiFi Teploměr, navštivte Teploty.info pro další informace.</string>
     <string name="description2">Aktuální změřené teploty a další data jsou zobrazena přímo na ploše. Stačí si na volné místo přidat tzv. Widget jménem WiFi Teploměr. Ještě je nutno nastavit přihlašovací údaje k serveru.</string>
-    <string name="description3">Tato aplikace je ve velmi raném stádiu, pre-alfa řekl bych. Teploty obnovuje jednou za minutu a bere vždy jen první WiFi Teploměr (pokud jich máte víc). Vše bude časem nastavitelné. Není třeba hodnotit v obchodě Play, na to je ještě moc brzy. Spíš mi napište mail na info@teploty.info, jak vám aplikace funguje.</string>
+    <string name="description3">Tato aplikace je ve velmi raném stádiu, pre-alfa řekl bych. Teploty obnovuje jednou za 3 minuty a bere vždy jen první WiFi Teploměr (pokud jich máte víc). Vše bude časem nastavitelné. Není třeba hodnotit v obchodě Play, na to je ještě moc brzy. Spíš mi napište mail na info@teploty.info, jak vám aplikace funguje.</string>
 </resources>

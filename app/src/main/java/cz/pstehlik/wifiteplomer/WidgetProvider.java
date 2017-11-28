@@ -7,7 +7,9 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -39,17 +41,12 @@ public class WidgetProvider extends AppWidgetProvider {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
-        clickIntent = new Intent(context, WidgetProvider.class);
-        clickIntent.setAction(UPDATE_LIST);
-        PendingIntent pendingIntentRefresh = PendingIntent.getBroadcast(context, 0, clickIntent, 0);
-        widget.setOnClickPendingIntent(R.id.update_list, pendingIntentRefresh);
+        widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
 
-        long interval = 60000;
-        Intent in = new Intent(context, WidgetProvider.class);
-        in.setAction(UPDATE_LIST);
-        PendingIntent alarmPI = PendingIntent.getBroadcast(context, 0, in, 0);
+        long interval = 3 * 60 * 1000;
         AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarm.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), interval, alarmPI);
+        alarm.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), interval, myUpdateIntent(context));
+        Log.e("app widget id - ", "alarm started");
 
         setLastUpdateTime(widget);
 
@@ -61,9 +58,35 @@ public class WidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        if (intent.getAction().equalsIgnoreCase(UPDATE_LIST)) {
+        if (intent.getAction().equalsIgnoreCase(UPDATE_LIST) && isScreenOn(context)) {
             updateWidget(context);
         }
+/*
+        else if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
+            // if it is longer than X minutes since last update then do update
+            Log.e("app widget id - ", "onUserPresent");
+            updateWidget(context);
+        }
+*/
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        alarm.cancel(myUpdateIntent(context));
+        Log.e("app widget id - ", "alarm stopped");
+    }
+
+    private PendingIntent myUpdateIntent(Context context) {
+        Intent in = new Intent(context, WidgetProvider.class);
+        in.setAction(UPDATE_LIST);
+        return PendingIntent.getBroadcast(context, 0, in, 0);
+    }
+
+    private boolean isScreenOn(Context context) {
+        PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        return mgr.isScreenOn();
     }
 
     private void updateWidget(Context context) {

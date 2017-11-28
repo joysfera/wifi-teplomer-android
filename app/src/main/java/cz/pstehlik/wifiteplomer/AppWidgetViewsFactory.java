@@ -122,7 +122,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     private void getTemperatures() {
-        String json = getTempData(context);
+        String json = getTempData(context.getApplicationContext());
         arrayList.clear();
         try {
             JSONObject reader = new JSONObject(json);
