@@ -7,7 +7,6 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -19,11 +18,53 @@ import java.util.Date;
 
 public class WidgetProvider extends AppWidgetProvider {
     public static String UPDATE_LIST = "UPDATE_LIST";
+    static long lastForcedUpdateAt = 0;
+
+    public static void turnAlarmOnOff(Context context, boolean turnOn) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager == null) return;
+        PendingIntent pendingIntent = myUpdateIntent(context);
+
+        if (turnOn) {
+            long interval = 3 * 60 * 1000;
+            long currentTime = SystemClock.elapsedRealtime();
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, currentTime + interval, interval, pendingIntent);
+            Log.d("WidgetProvider", "Alarm set");
+            if (currentTime > lastForcedUpdateAt + 30 * 1000) {
+                try {
+                    pendingIntent.send();
+                    lastForcedUpdateAt = currentTime;
+                    Log.d("WidgetProvider", "Forced update");
+                } catch (PendingIntent.CanceledException e) {
+                    Log.wtf("WidgetProvider", "Exception in pendingIntent.send()");
+                }
+            }
+        } else {
+            alarmManager.cancel(pendingIntent);
+            Log.d("WidgetProvider", "Alarm disabled");
+        }
+    }
+
+    private static PendingIntent myUpdateIntent(Context context) {
+        Intent in = new Intent(context, WidgetProvider.class);
+        in.setAction(UPDATE_LIST);
+        return PendingIntent.getBroadcast(context, 0, in, 0);
+    }
+
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+
+        Log.d("WidgetProvider", "onEnabled()");
+
+        turnAlarmOnOff(context, true);
+        context.startService(new Intent(context, ScreenMonitorService.class));
+    }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 
-        Log.e("app widget id - ", appWidgetIds.length + " = onUpdate");
+        Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ")");
         Intent svcIntent = new Intent(context, WidgetService.class);
         //svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
         //svcIntent.setData(Uri.parse(svcIntent .toUri(Intent.URI_INTENT_SCHEME)));
@@ -42,12 +83,12 @@ public class WidgetProvider extends AppWidgetProvider {
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
         widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
-
+/*
         long interval = 3 * 60 * 1000;
         AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarm.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), interval, myUpdateIntent(context));
         Log.e("app widget id - ", "alarm started");
-
+*/
         setLastUpdateTime(widget);
 
         appWidgetManager.updateAppWidget(appWidgetIds, widget);
@@ -58,39 +99,31 @@ public class WidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        if (intent.getAction().equalsIgnoreCase(UPDATE_LIST) && isScreenOn(context)) {
-            updateWidget(context);
+
+        final String action = (intent != null ? intent.getAction() : null);
+        if (UPDATE_LIST.equals(action)) {
+            Log.d("WidgetProvider", "onReceive(UPDATE_LIST)");
+            if (isScreenOn(context)) {
+                updateWidget(context);
+            }
         }
-/*
-        else if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
-            // if it is longer than X minutes since last update then do update
-            Log.e("app widget id - ", "onUserPresent");
-            updateWidget(context);
-        }
-*/
     }
 
     @Override
     public void onDisabled(Context context) {
         super.onDisabled(context);
-        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarm.cancel(myUpdateIntent(context));
-        Log.e("app widget id - ", "alarm stopped");
-    }
 
-    private PendingIntent myUpdateIntent(Context context) {
-        Intent in = new Intent(context, WidgetProvider.class);
-        in.setAction(UPDATE_LIST);
-        return PendingIntent.getBroadcast(context, 0, in, 0);
+        turnAlarmOnOff(context, false);
+        context.stopService(new Intent(context, ScreenMonitorService.class));
     }
 
     private boolean isScreenOn(Context context) {
         PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        return mgr.isScreenOn();
+        return (mgr != null) && mgr.isScreenOn();
     }
 
     private void updateWidget(Context context) {
-        Log.e("app widget id - ", "updating widget");
+        Log.d("WidgetProvider", "updateWidget()");
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         int appWidgetIds[] = appWidgetManager.getAppWidgetIds(new ComponentName(context, WidgetProvider.class));

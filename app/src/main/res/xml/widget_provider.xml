@@ -5,4 +5,5 @@
     android:minResizeHeight="56dp"
     android:minResizeWidth="180dp"
     android:minWidth="180dp"
-    android:resizeMode="vertical|horizontal" />
+    android:resizeMode="vertical|horizontal"
+    android:updatePeriodMillis="0" />
