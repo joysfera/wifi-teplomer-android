@@ -8,9 +8,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.TypedValue;
 import android.widget.RemoteViews;
 
 import java.text.SimpleDateFormat;
@@ -52,19 +54,15 @@ public class WidgetProvider extends AppWidgetProvider {
     }
 
     @Override
-    public void onEnabled(Context context) {
-        super.onEnabled(context);
-
-        Log.d("WidgetProvider", "onEnabled()");
-
-        turnAlarmOnOff(context, true);
-        context.startService(new Intent(context, ScreenMonitorService.class));
-    }
-
-    @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 
         Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ")");
+
+        // this used to be in onEnabled() but that was not called everytime, unfortunately
+        turnAlarmOnOff(context, isScreenOn(context)); // enable timer only if screen is on
+        context.startService(new Intent(context, ScreenMonitorService.class));
+        // end of what used to be in onEnabled()
+
         Intent svcIntent = new Intent(context, WidgetService.class);
         //svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
         //svcIntent.setData(Uri.parse(svcIntent .toUri(Intent.URI_INTENT_SCHEME)));
@@ -83,12 +81,7 @@ public class WidgetProvider extends AppWidgetProvider {
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
         widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
-/*
-        long interval = 3 * 60 * 1000;
-        AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarm.setRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(), interval, myUpdateIntent(context));
-        Log.e("app widget id - ", "alarm started");
-*/
+
         setLastUpdateTime(widget);
 
         appWidgetManager.updateAppWidget(appWidgetIds, widget);
@@ -107,6 +100,26 @@ public class WidgetProvider extends AppWidgetProvider {
                 updateWidget(context);
             }
         }
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+        Log.d("WidgetProvider", "AppWidgetOptionsChanged!");
+
+        // See the dimensions and
+        Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
+
+        // Get min width and height.
+        int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
+/*
+        RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
+        widget.setTextViewTextSize(R.id.last_update, TypedValue.COMPLEX_UNIT_SP, 32);
+        widget.setTextViewTextSize(R.id.temperatures,TypedValue.COMPLEX_UNIT_SP, 24);
+*/
+        // Obtain appropriate widget and update it.
+        ///appWidgetManager.updateAppWidget(appWidgetId, getRemoteViews(context, minWidth, minHeight));
     }
 
     @Override
