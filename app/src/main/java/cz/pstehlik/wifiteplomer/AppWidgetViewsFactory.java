@@ -12,10 +12,15 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,7 +29,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
     private Context context = null;
     private int appWidgetId;
-    private ArrayList<String> arrayList = new ArrayList<String>();
+    private ArrayList<JSONObject> arrayList = new ArrayList<JSONObject>();
 
     public AppWidgetViewsFactory(Context ctxt, Intent intent) {
         this.context = ctxt;
@@ -36,7 +41,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         StringBuilder json = new StringBuilder();
         HttpsURLConnection urlConnection = null;
         try {
-            URL url = new URL(getTeplotyInfoUrl("data.php", context));
+            URL url = new URL(getTeplotyInfoUrl("data2.php", context));
             urlConnection = (HttpsURLConnection) url.openConnection();
             int status = urlConnection.getResponseCode();
             if (status == 200) {
@@ -84,10 +89,21 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     public RemoteViews getViewAt(int position) {
         RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.row);
 
-        String t = arrayList.get(position);
-        String[] p = t.split("=");
-        row.setTextViewText(android.R.id.text1, p[0]);
-        row.setTextViewText(android.R.id.text2, p[1]);
+        try {
+            JSONObject sensor = arrayList.get(position);
+            String name = sensor.getString("n");
+            double value = sensor.getDouble("v");
+            String unit = sensor.getString("u");
+            int range = sensor.getInt("r");
+            row.setTextViewText(android.R.id.text1, name);
+            SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
+            if (range != 0)
+                s.setSpan(new StyleSpan(Typeface.BOLD), 0, Math.max(s.length() - 2, 0), 0);
+            row.setTextViewText(android.R.id.text2, s);
+            row.setTextColor(android.R.id.text2, (range == 0) ? Color.BLACK : ((range > 0) ? Color.RED : Color.BLUE));
+        } catch (JSONException e) {
+            Log.e(getClass().getSimpleName(), "decode JSON exception");
+        }
 
         // required for the clickIntent in AppWidgetViewsFactory.java to work
         Intent i = new Intent(Intent.ACTION_VIEW);
@@ -127,19 +143,13 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         try {
             JSONObject reader = new JSONObject(json);
             JSONObject cidla = reader.getJSONObject("cidla");
-            Iterator<?> keys = cidla.keys();
-            while (keys.hasNext()) {
-                String key = (String) keys.next();
-                String val = cidla.get(key).toString();
-                // workaround for missing units in the JSON data, will be removed after upgrading the JSON data
-                String unit = "\u2103";
-                if (val.contains("%")) {
-                    val = val.replace("%", "");
-                    unit = "%";
+            Iterator<?> nodes = cidla.keys();
+            while (nodes.hasNext()) {
+                String node = (String) nodes.next();
+                JSONArray data = cidla.getJSONArray(node);
+                for (int i = 0; i < data.length(); i++) {
+                    arrayList.add(data.getJSONObject(i));
                 }
-                float num = Float.parseFloat(val);
-                // end of the workaround
-                arrayList.add(String.format("%s=%.1f %s", key, num, unit));
             }
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
