@@ -90,17 +90,19 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.row);
 
         try {
-            JSONObject sensor = arrayList.get(position);
-            String name = sensor.getString("n");
-            double value = sensor.getDouble("v");
-            String unit = sensor.getString("u");
-            int range = sensor.getInt("r");
-            row.setTextViewText(android.R.id.text1, name);
-            SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
-            if (range != 0)
-                s.setSpan(new StyleSpan(Typeface.BOLD), 0, Math.max(s.length() - 2, 0), 0);
-            row.setTextViewText(android.R.id.text2, s);
-            row.setTextColor(android.R.id.text2, (range == 0) ? Color.BLACK : ((range > 0) ? Color.RED : Color.BLUE));
+            if (position >= 0 && position < arrayList.size()) {
+                JSONObject sensor = arrayList.get(position);
+                String name = sensor.getString("n");
+                double value = sensor.getDouble("v");
+                String unit = sensor.getString("u");
+                int range = sensor.getInt("r");
+                row.setTextViewText(android.R.id.text1, name);
+                SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
+                if (range != 0)
+                    s.setSpan(new StyleSpan(Typeface.BOLD), 0, Math.max(s.length() - 2, 0), 0);
+                row.setTextViewText(android.R.id.text2, s);
+                row.setTextColor(android.R.id.text2, (range == 0) ? Color.BLACK : ((range > 0) ? Color.RED : Color.BLUE));
+            }
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
         }
