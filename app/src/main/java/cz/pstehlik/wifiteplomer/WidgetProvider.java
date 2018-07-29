@@ -60,7 +60,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
         // this used to be in onEnabled() but that was not called everytime, unfortunately
         turnAlarmOnOff(context, isScreenOn(context)); // enable timer only if screen is on
-        context.startService(new Intent(context, ScreenMonitorService.class));
+        MyBroadcastReceiver.registerScreenReceiver(context);
         // end of what used to be in onEnabled()
 
         Intent svcIntent = new Intent(context, WidgetService.class);
@@ -126,8 +126,8 @@ public class WidgetProvider extends AppWidgetProvider {
     public void onDisabled(Context context) {
         super.onDisabled(context);
 
+        MyBroadcastReceiver.unregisterScreenReceiver(context);
         turnAlarmOnOff(context, false);
-        context.stopService(new Intent(context, ScreenMonitorService.class));
     }
 
     private boolean isScreenOn(Context context) {
