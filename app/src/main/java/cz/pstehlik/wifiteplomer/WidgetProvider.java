@@ -50,16 +50,17 @@ public class WidgetProvider extends AppWidgetProvider {
     private static PendingIntent myUpdateIntent(Context context) {
         Intent in = new Intent(context, WidgetProvider.class);
         in.setAction(UPDATE_LIST);
+        Log.d("WidgetProvider", "myUpdateIntent generated to refresh widget in timely manner");
         return PendingIntent.getBroadcast(context, 0, in, 0);
     }
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 
-        Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ")");
+        Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ") => widget added?");
 
         // this used to be in onEnabled() but that was not called everytime, unfortunately
-        turnAlarmOnOff(context, isScreenOn(context)); // enable timer only if screen is on
+        turnAlarmOnOff(context, true); // enable timer only if screen is on
         MyBroadcastReceiver.registerScreenReceiver(context);
         // end of what used to be in onEnabled()
 
@@ -98,6 +99,9 @@ public class WidgetProvider extends AppWidgetProvider {
             Log.d("WidgetProvider", "onReceive(UPDATE_LIST)");
             if (isScreenOn(context)) {
                 updateWidget(context);
+                Log.d("WidgetProvider", "trying to force-enabling timer and re-registering screen intents - maybe unnecessarily?");
+                turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
+                MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
             }
         }
     }
@@ -125,7 +129,7 @@ public class WidgetProvider extends AppWidgetProvider {
     @Override
     public void onDisabled(Context context) {
         super.onDisabled(context);
-
+        Log.d("WidgetProvider", "onDisabled() => widget removed!");
         MyBroadcastReceiver.unregisterScreenReceiver(context);
         turnAlarmOnOff(context, false);
     }
