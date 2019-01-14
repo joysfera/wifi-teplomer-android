@@ -15,6 +15,8 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -27,9 +29,27 @@ import org.json.JSONObject;
 import javax.net.ssl.HttpsURLConnection;
 
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
-    private Context context = null;
+    private Context context;
     private int appWidgetId;
-    private ArrayList<JSONObject> arrayList = new ArrayList<JSONObject>();
+
+    private ArrayList<DataEntry> arrayList = new ArrayList<>();
+
+    @Override
+    public RemoteViews getViewAt(int position) {
+        RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.row);
+
+        if (position >= 0 && position < arrayList.size()) {
+            DataEntry d = arrayList.get(position);
+            row.setTextViewText(android.R.id.text1, d.name);
+            row.setTextViewText(android.R.id.text2, d.value);
+        }
+
+        // required for the clickIntent in AppWidgetViewsFactory.java to work
+        Intent i = new Intent(Intent.ACTION_VIEW);
+        row.setOnClickFillInIntent(android.R.id.text1, i);
+
+        return row;
+    }
 
     public AppWidgetViewsFactory(Context ctxt, Intent intent) {
         this.context = ctxt;
@@ -85,33 +105,24 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return (arrayList.size());
     }
 
-    @Override
-    public RemoteViews getViewAt(int position) {
-        RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.row);
-
+    private DataEntry getDataEntry(JSONObject sensor) {
         try {
-            if (position >= 0 && position < arrayList.size()) {
-                JSONObject sensor = arrayList.get(position);
-                String name = sensor.getString("n");
-                double value = sensor.getDouble("v");
-                String unit = sensor.getString("u");
-                int range = sensor.getInt("r");
-                row.setTextViewText(android.R.id.text1, name);
-                SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
-                if (range != 0)
-                    s.setSpan(new StyleSpan(Typeface.BOLD), 0, Math.max(s.length() - 2, 0), 0);
-                row.setTextViewText(android.R.id.text2, s);
-                row.setTextColor(android.R.id.text2, (range == 0) ? Color.BLACK : ((range > 0) ? Color.RED : Color.BLUE));
+            String name = sensor.getString("n");
+            double value = sensor.getDouble("v");
+            String unit = sensor.getString("u");
+            int range = sensor.getInt("r");
+
+            SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
+            if (range != 0) {
+                int len = s.length() - unit.length() - 1;
+                s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
+                s.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, len, 0);
             }
+            return new DataEntry(name, s);
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
         }
-
-        // required for the clickIntent in AppWidgetViewsFactory.java to work
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        row.setOnClickFillInIntent(android.R.id.text1, i);
-
-        return row;
+        return new DataEntry();
     }
 
     @Override
@@ -141,6 +152,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     private void getTemperatures() {
         String json = getTempData(context.getApplicationContext());
+        ArrayList<JSONObject> list = new ArrayList<>();
         arrayList.clear();
         try {
             JSONObject reader = new JSONObject(json);
@@ -150,11 +162,41 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 String node = (String) nodes.next();
                 JSONArray data = cidla.getJSONArray(node);
                 for (int i = 0; i < data.length(); i++) {
-                    arrayList.add(data.getJSONObject(i));
+                    list.add(data.getJSONObject(i));
                 }
+            }
+
+            for (int position = 0; position < list.size(); position++) {
+                DataEntry x = getDataEntry(list.get(position));
+                SpannableStringBuilder s = new SpannableStringBuilder();
+                s.append(x.value);
+                int pos = position + 1;
+                while (pos < list.size()) {
+                    DataEntry y = getDataEntry(list.get(pos));
+                    if (x.name.equals(y.name)) {
+                        s.append(' ');
+                        s.append(y.value);
+                        list.remove(pos);
+                    } else pos++;
+                }
+
+                arrayList.add(new DataEntry(x.name, SpannableString.valueOf(s)));
             }
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
+        }
+    }
+
+    private class DataEntry {
+        public String name;
+        public SpannableString value;
+
+        DataEntry() {
+        }
+
+        DataEntry(String _name, SpannableString _value) {
+            name = _name;
+            value = _value;
         }
     }
 }
