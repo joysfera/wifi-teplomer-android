@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId "cz.pstehlik.wifiteplomer"
-        minSdkVersion 19
-        targetSdkVersion 26
+        minSdkVersion 16
+        targetSdkVersion 29
     }
 
     buildTypes {
@@ -17,7 +17,6 @@ android {
     }
 }
 dependencies {
-    //implementation 'com.android.support:appcompat-v7:27.+'
-    implementation 'com.android.support:design:27.+'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 }
