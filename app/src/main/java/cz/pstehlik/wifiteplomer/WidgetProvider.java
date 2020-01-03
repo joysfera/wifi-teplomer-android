@@ -14,6 +14,8 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -70,9 +72,8 @@ public class WidgetProvider extends AppWidgetProvider {
         RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
         widget.setRemoteAdapter(R.id.temperatures, svcIntent);
 
-        Intent clickIntent = new Intent(Intent.ACTION_VIEW); // new Intent(context, MainActivity.class);
-        clickIntent.setData(Uri.parse(AppWidgetViewsFactory.getTeplotyInfoUrl("profile.php", context)));
-        PendingIntent clickPI = PendingIntent.getActivity(context, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
+        PendingIntent clickPI = PendingIntent.getBroadcast(context, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
 
         // Create an Intent to launch ConfigurationActivity
@@ -80,6 +81,7 @@ public class WidgetProvider extends AppWidgetProvider {
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
+        // Create an Intent to force updating widget
         widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
 
         setLastUpdateTime(widget);
@@ -102,6 +104,26 @@ public class WidgetProvider extends AppWidgetProvider {
                 turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
                 MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
             }
+        }
+        else if ("SABAKA_KLIK".equals(action)) {
+            String node = intent.getStringExtra("EXTRA_SABAKA_NODE");
+            String sensor = intent.getStringExtra("EXTRA_SABAKA_SENSOR");
+            String unit = intent.getStringExtra("EXTRA_SABAKA_UNIT");
+            String url = AppWidgetViewsFactory.getTeplotyInfoUrl("profile.php", context);
+            if (sensor != null && !sensor.isEmpty()) {
+                try {
+                    url = AppWidgetViewsFactory.getTeplotyInfoUrl("graf.php", context)
+                            + "&node=" + URLEncoder.encode(node, "UTF-8")
+                            + "&sensor=" + URLEncoder.encode(sensor, "UTF-8")
+                            + " [" + URLEncoder.encode(unit, "UTF-8") + "]";
+                } catch (UnsupportedEncodingException e) {
+                    ;
+                }
+            }
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            i.setData(Uri.parse(url));
+            context.startActivity(i);
         }
     }
 

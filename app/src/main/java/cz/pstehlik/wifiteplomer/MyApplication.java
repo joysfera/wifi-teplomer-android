@@ -14,7 +14,7 @@ public class MyApplication extends Application {
         super.onConfigurationChanged(newConfig);
 
         // called when screen orientation changes - widget must be updated, otherwise it'll stop responding
-        Log.d("MyApplication", "OnConfigurationChanged!");
+        Log.d("WiFi Teploměr", "OnConfigurationChanged!");
 
         // create intent to update all instances of the widget
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, this, WidgetProvider.class);

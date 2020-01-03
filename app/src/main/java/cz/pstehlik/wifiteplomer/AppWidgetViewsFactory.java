@@ -42,6 +42,11 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             DataEntry d = arrayList.get(position);
             row.setTextViewText(android.R.id.text1, d.name);
             row.setTextViewText(android.R.id.text2, d.value);
+            Intent fillInIntent = new Intent()
+                    .putExtra("EXTRA_SABAKA_NODE", d.node)
+                    .putExtra("EXTRA_SABAKA_SENSOR", d.name)
+                    .putExtra("EXTRA_SABAKA_UNIT", d.unit);
+            row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
         }
 
         // required for the clickIntent in AppWidgetViewsFactory.java to work
@@ -106,7 +111,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return (arrayList.size());
     }
 
-    private DataEntry getDataEntry(JSONObject sensor) {
+    private DataEntry getDataEntry(String node, JSONObject sensor) {
         try {
             String name = sensor.getString("n");
             double value = sensor.getDouble("v");
@@ -119,7 +124,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
                 s.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, len, 0);
             }
-            return new DataEntry(name, s);
+            return new DataEntry(node, name, s, unit);
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
         }
@@ -162,26 +167,27 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             while (nodes.hasNext()) {
                 String node = (String) nodes.next();
                 JSONArray data = cidla.getJSONArray(node);
+                list.clear();
                 for (int i = 0; i < data.length(); i++) {
                     list.add(data.getJSONObject(i));
                 }
-            }
 
-            for (int position = 0; position < list.size(); position++) {
-                DataEntry x = getDataEntry(list.get(position));
-                SpannableStringBuilder s = new SpannableStringBuilder();
-                s.append(x.value);
-                int pos = position + 1;
-                while (pos < list.size()) {
-                    DataEntry y = getDataEntry(list.get(pos));
-                    if (x.name.equals(y.name)) {
-                        s.append(' ');
-                        s.append(y.value);
-                        list.remove(pos);
-                    } else pos++;
+                for (int position = 0; position < list.size(); position++) {
+                    DataEntry x = getDataEntry(node, list.get(position));
+                    SpannableStringBuilder s = new SpannableStringBuilder();
+                    s.append(x.value);
+                    int pos = position + 1;
+                    while (pos < list.size()) {
+                        DataEntry y = getDataEntry(node, list.get(pos));
+                        if (x.name.equals(y.name)) {
+                            s.append(' ');
+                            s.append(y.value);
+                            list.remove(pos);
+                        } else pos++;
+                    }
+
+                    arrayList.add(new DataEntry(node, x.name, SpannableString.valueOf(s), x.unit));
                 }
-
-                arrayList.add(new DataEntry(x.name, SpannableString.valueOf(s)));
             }
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
@@ -189,15 +195,19 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     private class DataEntry {
+        public String node;
         public String name;
         public SpannableString value;
+        public String unit;
 
         DataEntry() {
         }
 
-        DataEntry(String _name, SpannableString _value) {
+        DataEntry(String _node, String _name, SpannableString _value, String _unit) {
+            node = _node;
             name = _name;
             value = _value;
+            unit = _unit;
         }
     }
 }
