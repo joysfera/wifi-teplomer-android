@@ -29,8 +29,13 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
 
     public static void unregisterScreenReceiver(Context context) {
         if (inst != null) {
-            context.getApplicationContext().unregisterReceiver(inst);
-            Log.d("MyBroadcastReceiver", "unregisterScreenReceiver");
+            try {
+                Log.d("MyBroadcastReceiver", "unregisterScreenReceiver");
+                context.getApplicationContext().unregisterReceiver(inst);
+            }
+            catch(java.lang.IllegalArgumentException e) {
+                Log.d("MyBroadcastReceiver", "unregisterScreenReceiver crashed");
+            }
         }
     }
 
