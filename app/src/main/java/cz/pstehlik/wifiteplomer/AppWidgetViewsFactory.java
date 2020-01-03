@@ -73,6 +73,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 }
             }
         } catch (Exception e) {
+            Log.e("WiFi Teploměr", "getTempData exception");
         } finally {
             if (urlConnection != null) urlConnection.disconnect();
         }

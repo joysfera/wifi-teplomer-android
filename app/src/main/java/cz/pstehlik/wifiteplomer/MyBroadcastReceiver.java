@@ -37,6 +37,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = (intent != null ? intent.getAction() : "");
+        if (action == null) return;
         if (action.equals(Intent.ACTION_SCREEN_OFF)) {
             Log.d("MyBroadcastReceiver", "ACTION_SCREEN_OFF");
             // WidgetProvider.turnAlarmOnOff(context, false);
