@@ -63,6 +63,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     static public String getTempData(Context context) {
+        Log.d("AppWidgetViewsFactory", "getTempData()");
         StringBuilder json = new StringBuilder();
         HttpsURLConnection urlConnection = null;
         try {
@@ -118,7 +119,9 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             String unit = sensor.getString("u");
             int range = sensor.getInt("r");
 
-            SpannableString s = new SpannableString(String.format("%.1f %s", value, unit));
+            String form = (unit.equals("ppm") || unit.equals("imp") || unit.length() == 0) ? "%.0f %s" : "%.1f %s";
+            if (unit.length() == 0) unit = (value > 0 ? "zap" : "vyp");
+            SpannableString s = new SpannableString(String.format(form, value, unit));
             if (range != 0) {
                 int len = s.length() - unit.length() - 1;
                 s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
@@ -190,7 +193,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 }
             }
         } catch (JSONException e) {
-            Log.e(getClass().getSimpleName(), "decode JSON exception");
+            Log.e(getClass().getSimpleName(), "decode JSON exception: " + json);
         }
     }
 
