@@ -23,9 +23,10 @@ public class WidgetProvider extends AppWidgetProvider {
     public static String UPDATE_LIST = "UPDATE_LIST";
     static long lastForcedUpdateAt = 0;
 
-    public static void turnAlarmOnOff(Context context, boolean turnOn) {
+    public static boolean turnAlarmOnOff(Context context, boolean turnOn) {
+        boolean updated = false;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return;
+        if (alarmManager == null) return updated;
         PendingIntent pendingIntent = myUpdateIntent(context);
 
         if (turnOn) {
@@ -38,6 +39,7 @@ public class WidgetProvider extends AppWidgetProvider {
                     pendingIntent.send();
                     lastForcedUpdateAt = currentTime;
                     Log.d("WidgetProvider", "Forced update");
+                    updated = true;
                 } catch (PendingIntent.CanceledException e) {
                     Log.wtf("WidgetProvider", "Exception in pendingIntent.send()");
                 }
@@ -46,6 +48,7 @@ public class WidgetProvider extends AppWidgetProvider {
             alarmManager.cancel(pendingIntent);
             Log.d("WidgetProvider", "Alarm disabled");
         }
+        return updated;
     }
 
     private static PendingIntent myUpdateIntent(Context context) {
@@ -55,21 +58,11 @@ public class WidgetProvider extends AppWidgetProvider {
         return PendingIntent.getBroadcast(context, 0, in, 0);
     }
 
-    @Override
-    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-
-        Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ") => widget added?");
-
-        // this used to be in onEnabled() but that was not called everytime, unfortunately
-        turnAlarmOnOff(context, true); // enable timer only if screen is on
-        MyBroadcastReceiver.registerScreenReceiver(context);
-        // end of what used to be in onEnabled()
-
+    private void updateClickIntents(Context context, RemoteViews widget) {
         Intent svcIntent = new Intent(context, WidgetService.class);
         //svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
         //svcIntent.setData(Uri.parse(svcIntent .toUri(Intent.URI_INTENT_SCHEME)));
 
-        RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
         widget.setRemoteAdapter(R.id.temperatures, svcIntent);
 
         Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
@@ -84,9 +77,26 @@ public class WidgetProvider extends AppWidgetProvider {
         // Create an Intent to force updating widget
         widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
 
-        setLastUpdateTime(widget);
+        // update time
+        widget.setTextViewText(R.id.last_update, "Teploty v " + new SimpleDateFormat("HH:mm").format(new Date()));
+    }
 
-        appWidgetManager.updateAppWidget(appWidgetIds, widget);
+    @Override
+    public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+
+        Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ") => widget added?");
+
+        // this used to be in onEnabled() but that was not called everytime, unfortunately
+        turnAlarmOnOff(context, true); // enable timer only if screen is on
+        MyBroadcastReceiver.registerScreenReceiver(context);
+        // end of what used to be in onEnabled()
+
+        for(int i = 0; i < appWidgetIds.length; i++) {
+            int appWidgetId = appWidgetIds[i];
+            RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
+            updateClickIntents(context, widget);
+            appWidgetManager.updateAppWidget(appWidgetId, widget);
+        }
 
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
@@ -99,10 +109,12 @@ public class WidgetProvider extends AppWidgetProvider {
         if (UPDATE_LIST.equals(action)) {
             Log.d("WidgetProvider", "onReceive(UPDATE_LIST)");
             if (isScreenOn(context)) {
-                updateWidget(context);
+                // something is calling the updateWidget() twice
                 Log.d("WidgetProvider", "trying to force-enabling timer and re-registering screen intents - maybe unnecessarily?");
-                turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
+                boolean updated = turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
                 MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
+                if (!updated)
+                    updateWidget(context);
             }
         }
         else if ("SABAKA_KLIK".equals(action)) {
@@ -165,14 +177,12 @@ public class WidgetProvider extends AppWidgetProvider {
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, WidgetProvider.class));
+        for(int i = 0; i < appWidgetIds.length; i++) {
+            int appWidgetId = appWidgetIds[i];
+            RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
+            updateClickIntents(context, widget);
+            appWidgetManager.updateAppWidget(appWidgetId, widget);
+        }
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.temperatures);
-
-        RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
-        setLastUpdateTime(widget);
-        appWidgetManager.updateAppWidget(appWidgetIds, widget);
-    }
-
-    private void setLastUpdateTime(RemoteViews widget) {
-        widget.setTextViewText(R.id.last_update, "Teploty v " + new SimpleDateFormat("HH:mm").format(new Date()));
     }
 }
