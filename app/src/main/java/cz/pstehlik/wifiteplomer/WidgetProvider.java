@@ -78,7 +78,7 @@ public class WidgetProvider extends AppWidgetProvider {
         widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
 
         // update time
-        widget.setTextViewText(R.id.last_update, "Teploty v " + new SimpleDateFormat("HH:mm").format(new Date()));
+        widget.setTextViewText(R.id.last_update, context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
     }
 
     @Override

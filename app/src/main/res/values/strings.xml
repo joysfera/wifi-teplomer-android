@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="title_activity_main">WiFi Teploměr</string>
+    <string name="title_activity_main">WiFi Thermometer</string>
 
-    <string name="app_name">WiFi Teploměr</string>
-    <string name="title_activity_login">Přihlášení na Teploty.info</string>
+    <string name="app_name">WiFi Thermometer</string>
+    <string name="title_activity_login">Sign in Teploty.info</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Jméno</string>
-    <string name="prompt_password">Heslo</string>
-    <string name="action_sign_in">Uložit</string>
-    <string name="action_sign_in_short">Přihlášení</string>
-    <string name="error_incorrect_password">Jméno nebo heslo není správné</string>
-    <string name="error_field_required">Jméno je nutno vyplnit</string>
-    <string name="description1">Tato aplikace slouží jako šikovný doplněk WiFi Teploměrů a serveru Teploty.info. Pokud nemáte WiFi Teploměr, navštivte Teploty.info pro další informace.</string>
-    <string name="description2">Aktuální změřené hodnoty jsou zobrazeny přímo na ploše. Stačí si na volné místo přidat tzv. Widget jménem WiFi Teploměr. Ještě je nutno nastavit přihlašovací údaje k serveru.</string>
-    <string name="description3">Hodnoty obnovuje jednou za 3 minuty. Napište mi na info@teploty.info, jak vám aplikace/widget funguje.</string>
+    <string name="prompt_email">Name</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Save</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_incorrect_password">Name or password is not valid</string>
+    <string name="error_field_required">Name is required</string>
+    <string name="description1">This application shows data from Teploty.info. If you do not have WiFi Thermometer yet, please visit www.Teploty.info first.</string>
+    <string name="description2">Up-to-date measured values are shown on the Home screen. All you need is to add so called App Widget named WiFi Thermometer, and set up login information.</string>
+    <string name="description3">Values are updated automatically every 3 minutes. Now continue by adding the widget to your Home screen manually.</string>
+    <string name="description4">Hints: tapping at the names of sensors opens up control screen for the given thermometer. Tapping at the value of a sensor opens up graph for the particular sensor.</string>
+    <string name="values_at">Updated at</string>
+    <string name="visit_web">Go to Teploty.info</string>
+    <string name="setup_login">Setup Login</string>
+    <string name="quit">Continue to Home screen</string>
+    <string name="value_on">On</string>
+    <string name="value_off">Off</string>
 </resources>

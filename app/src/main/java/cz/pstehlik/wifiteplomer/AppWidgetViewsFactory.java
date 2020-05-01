@@ -120,7 +120,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             int range = sensor.getInt("r");
 
             String form = (unit.equals("ppm") || unit.equals("imp") || unit.length() == 0) ? "%.0f %s" : "%.1f %s";
-            if (unit.length() == 0) unit = (value > 0 ? "zap" : "vyp");
+            if (unit.length() == 0) unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
             SpannableString s = new SpannableString(String.format(form, value, unit));
             if (range != 0) {
                 int len = s.length() - unit.length() - 1;

@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:onClick="visitWeb"
-            android:text="Navštívit Teploty.info" />
+            android:text="@string/visit_web" />
 
         <TextView
             android:id="@+id/description2"
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:onClick="configureLogin"
-            android:text="Nastavit přihlašovací údaje" />
+            android:text="@string/setup_login" />
 
         <TextView
             android:id="@+id/description3"
@@ -63,7 +63,15 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:onClick="byeBye"
-            android:text="Rozumím, a přidám si widget na plochu" />
+            android:text="@string/quit" />
 
+        <TextView
+            android:id="@+id/description4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="6sp"
+            android:paddingVertical="3sp"
+            android:text="@string/description4"
+            android:textSize="16sp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
