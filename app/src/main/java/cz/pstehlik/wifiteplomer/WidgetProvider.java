@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -91,12 +92,7 @@ public class WidgetProvider extends AppWidgetProvider {
         MyBroadcastReceiver.registerScreenReceiver(context);
         // end of what used to be in onEnabled()
 
-        for(int i = 0; i < appWidgetIds.length; i++) {
-            int appWidgetId = appWidgetIds[i];
-            RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
-            updateClickIntents(context, widget);
-            appWidgetManager.updateAppWidget(appWidgetId, widget);
-        }
+        updateAllWidgets(context, appWidgetManager, appWidgetIds);
 
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
@@ -172,17 +168,21 @@ public class WidgetProvider extends AppWidgetProvider {
         return (mgr != null) && mgr.isScreenOn();
     }
 
+    private void updateAllWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+        int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.widget_night : R.layout.widget;
+        for(int i = 0; i < appWidgetIds.length; i++) {
+            int appWidgetId = appWidgetIds[i];
+            RemoteViews widget = new RemoteViews(context.getPackageName(), wid);
+            updateClickIntents(context, widget);
+            appWidgetManager.updateAppWidget(appWidgetId, widget);
+        }
+    }
     private void updateWidget(Context context) {
         Log.d("WidgetProvider", "updateWidget()");
 
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, WidgetProvider.class));
-        for(int i = 0; i < appWidgetIds.length; i++) {
-            int appWidgetId = appWidgetIds[i];
-            RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
-            updateClickIntents(context, widget);
-            appWidgetManager.updateAppWidget(appWidgetId, widget);
-        }
+        updateAllWidgets(context, appWidgetManager, appWidgetIds);
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.temperatures);
     }
 }

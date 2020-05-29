@@ -12,6 +12,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
@@ -36,7 +37,9 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public RemoteViews getViewAt(int position) {
-        RemoteViews row = new RemoteViews(context.getPackageName(), R.layout.row);
+        int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.row_night : R.layout.row;
+
+        RemoteViews row = new RemoteViews(context.getPackageName(), wid);
 
         if (position >= 0 && position < arrayList.size()) {
             DataEntry d = arrayList.get(position);
