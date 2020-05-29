@@ -1,3 +1,8 @@
+# changes when IDE switches between release and debug
+app/app.iml
+# contains password to signing keys
+app/build.gradle
+
 # Built application files
 *.apk
 *.aar
