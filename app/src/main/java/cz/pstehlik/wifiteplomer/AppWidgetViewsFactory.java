@@ -20,6 +20,7 @@ import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
+import android.util.TypedValue;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -32,6 +33,7 @@ import javax.net.ssl.HttpsURLConnection;
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
     private Context context;
     private int appWidgetId;
+    private SharedPreferences teplotyPrefs = null;
 
     private ArrayList<DataEntry> arrayList = new ArrayList<>();
 
@@ -43,6 +45,12 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
         if (position >= 0 && position < arrayList.size()) {
             DataEntry d = arrayList.get(position);
+            final int fontsize = (teplotyPrefs != null) ? teplotyPrefs.getInt("fontsize", -1) : -1;
+            if (fontsize >= 0) {
+                float size = Math.round(14 * (float)Math.pow(1.142857143, fontsize));
+                row.setTextViewTextSize(android.R.id.text1, TypedValue.COMPLEX_UNIT_SP, size);
+                row.setTextViewTextSize(android.R.id.text2, TypedValue.COMPLEX_UNIT_SP, size);
+            }
             row.setTextViewText(android.R.id.text1, d.name);
             row.setTextViewText(android.R.id.text2, d.value);
             Intent fillInIntent = new Intent()
@@ -61,8 +69,8 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     public AppWidgetViewsFactory(Context ctxt, Intent intent) {
         this.context = ctxt;
-        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID);
+        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+        teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
     }
 
     static public String getTempData(Context context) {

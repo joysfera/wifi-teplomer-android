@@ -19,6 +19,7 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 /**
@@ -36,6 +37,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private SeekBar mFontSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,12 +56,15 @@ public class LoginActivity extends AppCompatActivity {
                 return false;
             }
         });
+        mFontSize = findViewById(R.id.fontsize);
 
         final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
         final String login = teplotyPrefs.getString("login", "");
         final String pwd = teplotyPrefs.getString("pwd", "");
+        final int fontsize = teplotyPrefs.getInt("fontsize", 0);
         mLoginView.setText(login);
         mPasswordView.setText(pwd);
+        mFontSize.setProgress(fontsize);
 
         Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -90,6 +95,7 @@ public class LoginActivity extends AppCompatActivity {
         // Store values at the time of the login attempt.
         String login = mLoginView.getText().toString();
         String password = mPasswordView.getText().toString();
+        int fontsize = mFontSize.getProgress();
 
         boolean cancel = false;
         View focusView = null;
@@ -111,6 +117,7 @@ public class LoginActivity extends AppCompatActivity {
             SharedPreferences.Editor e = teplotyPrefs.edit();
             e.putString("login", login);
             e.putString("pwd", password);
+            e.putInt("fontsize", fontsize);
             e.apply();
 
             // Show a progress spinner, and kick off a background task to

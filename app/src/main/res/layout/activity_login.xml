@@ -41,7 +41,8 @@
                     android:hint="@string/prompt_email"
                     android:inputType="textNoSuggestions"
                     android:maxLines="1"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:autofillHints="" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -59,9 +60,38 @@
                     android:imeOptions="actionUnspecified"
                     android:inputType="textPassword"
                     android:maxLines="1"
-                    android:singleLine="true" />
+                    android:singleLine="true"
+                    android:autofillHints="" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:background="?android:attr/listDivider"
+                    android:visibility="invisible" />
+
+                <SeekBar
+                    android:id="@+id/fontsize"
+                    style="@style/Widget.AppCompat.SeekBar.Discrete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="10"
+                    android:progress="0" />
+
+                <View
+                    android:id="@+id/divider2"
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:background="?android:attr/listDivider"
+                    android:visibility="invisible" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/email_sign_in_button"
@@ -74,4 +104,5 @@
 
         </LinearLayout>
     </ScrollView>
+
 </LinearLayout>
