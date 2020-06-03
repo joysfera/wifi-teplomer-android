@@ -22,4 +22,5 @@
     <string name="quit">Continue to Home screen</string>
     <string name="value_on">On</string>
     <string name="value_off">Off</string>
+    <string name="font_size">Set Font Size</string>
 </resources>

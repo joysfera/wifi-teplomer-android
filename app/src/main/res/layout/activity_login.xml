@@ -77,6 +77,12 @@
                     android:background="?android:attr/listDivider"
                     android:visibility="invisible" />
 
+                <TextView
+                    android:id="@+id/textView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/font_size" />
+
                 <SeekBar
                     android:id="@+id/fontsize"
                     style="@style/Widget.AppCompat.SeekBar.Discrete"

@@ -22,4 +22,5 @@
     <string name="quit">Pokračovat na plochu</string>
     <string name="value_on">zap</string>
     <string name="value_off">vyp</string>
+    <string name="font_size">Nastavit velikost písma</string>
 </resources>
