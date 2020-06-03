@@ -114,17 +114,34 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             // save credentials
             final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
-            SharedPreferences.Editor e = teplotyPrefs.edit();
-            e.putString("login", login);
-            e.putString("pwd", password);
-            e.putInt("fontsize", fontsize);
-            e.apply();
+            final String o_login = teplotyPrefs.getString("login", "");
+            final String o_pwd = teplotyPrefs.getString("pwd", "");
+            final int o_fontsize = teplotyPrefs.getInt("fontsize", 0);
+            boolean finish = true;
+            if (!o_login.equals(login) || !o_pwd.equals(password) || o_fontsize != fontsize) {
+                SharedPreferences.Editor e = teplotyPrefs.edit();
+                e.putString("login", login);
+                e.putString("pwd", password);
+                e.putInt("fontsize", fontsize);
+                e.apply();
 
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true);
-            mAuthTask = new UserLoginTask();
-            mAuthTask.execute((Void) null);
+                if (!o_login.equals(login) || !o_pwd.equals(password)) {
+                    // Show a progress spinner, and kick off a background task to
+                    // perform the user login attempt.
+                    showProgress(true);
+                    mAuthTask = new UserLoginTask();
+                    mAuthTask.execute((Void) null);
+                    finish = false;
+                } else {
+                    // update widget
+                    Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
+                    intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+                    int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(new ComponentName(getApplication(), WidgetProvider.class));
+                    intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                    sendBroadcast(intent);
+                }
+            }
+            if (finish) finish();
         }
     }
 
