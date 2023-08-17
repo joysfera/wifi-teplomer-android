@@ -56,7 +56,7 @@ public class WidgetProvider extends AppWidgetProvider {
         Intent in = new Intent(context, WidgetProvider.class);
         in.setAction(UPDATE_LIST);
         Log.d("WidgetProvider", "myUpdateIntent generated to refresh widget in timely manner");
-        return PendingIntent.getBroadcast(context, 0, in, 0);
+        return PendingIntent.getBroadcast(context, 0, in, PendingIntent.FLAG_IMMUTABLE);
     }
 
     private void updateClickIntents(Context context, RemoteViews widget) {
@@ -67,12 +67,12 @@ public class WidgetProvider extends AppWidgetProvider {
         widget.setRemoteAdapter(R.id.temperatures, svcIntent);
 
         Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
-        PendingIntent clickPI = PendingIntent.getBroadcast(context, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent clickPI = PendingIntent.getBroadcast(context, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
 
         // Create an Intent to launch ConfigurationActivity
         Intent intent = new Intent(context, LoginActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
         // Create an Intent to force updating widget

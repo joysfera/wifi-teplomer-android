@@ -1,12 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
-
     defaultConfig {
         applicationId "cz.pstehlik.wifiteplomer"
         minSdkVersion 16
-        targetSdkVersion 29
+        targetSdkVersion 33
+        compileSdk 33
     }
 
     buildTypes {
@@ -15,8 +14,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    namespace 'cz.pstehlik.wifiteplomer'
 }
 dependencies {
-    implementation 'com.google.android.material:material:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
