@@ -12,10 +12,10 @@
     <string name="action_sign_in_short">Sign in</string>
     <string name="error_incorrect_password">Name or password is not valid</string>
     <string name="error_field_required">Name is required</string>
-    <string name="description1">This application shows data from Teploty.info. If you do not have WiFi Thermometer yet, please visit www.Teploty.info first.</string>
-    <string name="description2">Up-to-date measured values are shown on the Home screen. All you need is to add so called App Widget named WiFi Thermometer, and set up login information.</string>
-    <string name="description3">Values are updated automatically every 3 minutes. Now continue by adding the widget to your Home screen manually.</string>
-    <string name="description4">Hints: tapping at the names of sensors opens up control screen for the given thermometer. Tapping at the value of a sensor opens up graph for the particular sensor.</string>
+    <string name="description1">This application shows data from Teploty.info. If you do not have WiFi Thermometer yet, please visit www.Teploty.info and check out the e-shop.</string>
+    <string name="description2">Up-to-date measured values are shown on the Home screen and are updated automatically every 3 minutes. All you need is to add so called App Widget \"WiFi Thermometer\". Continue by entering your login information to Teploty.info server:</string>
+    <string name="description3">Now continue to Home screen to add the widget:\n1) on your Home screen tap onto an empty space and hold for a second. A popup appears that will allow you to select from installed Widgets.\n2) Find the \"WiFi Thermometer\" and select it, then place it on an empty display space.\n3) it can be resized by dragging its borders in any direction.</string>
+    <string name="description4">Hints:\n- tapping at the names of sensors opens up control screen for the given thermometer.\n- tapping at the value of a sensor opens up graph for the particular sensor.</string>
     <string name="values_at">Updated at</string>
     <string name="visit_web">Go to Teploty.info</string>
     <string name="setup_login">Setup Login</string>

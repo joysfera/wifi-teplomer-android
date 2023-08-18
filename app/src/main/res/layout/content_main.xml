@@ -57,14 +57,6 @@
             android:text="@string/description3"
             android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/buttonOK"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="byeBye"
-            android:text="@string/quit" />
-
         <TextView
             android:id="@+id/description4"
             android:layout_width="match_parent"
@@ -73,5 +65,14 @@
             android:paddingVertical="3sp"
             android:text="@string/description4"
             android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/buttonOK"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:onClick="byeBye"
+            android:text="@string/quit" />
+
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

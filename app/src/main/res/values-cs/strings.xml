@@ -12,10 +12,10 @@
     <string name="action_sign_in_short">Přihlášení</string>
     <string name="error_incorrect_password">Jméno nebo heslo není správné</string>
     <string name="error_field_required">Jméno je nutno vyplnit</string>
-    <string name="description1">Tato aplikace slouží jako šikovný doplněk WiFi Teploměrů a serveru Teploty.info. Pokud nemáte WiFi Teploměr, navštivte Teploty.info pro další informace.</string>
-    <string name="description2">Aktuální změřené hodnoty jsou zobrazeny přímo na ploše. Stačí si na volné místo přidat tzv. App Widget jménem WiFi Teploměr. Ještě je nutno nastavit přihlašovací údaje k serveru.</string>
-    <string name="description3">Hodnoty se automaticky obnovují jednou za 3 minuty. Nyní můžete pokračovat na plochu, kde si ručně přidáte widget WiFi Teploměru.</string>
-    <string name="description4">Tipy: ťuknutím v levé polovině widgetu (na jména senzorů) otevřete obrazovku na ovládání WiFi Teploměru. Ťuknutím na některou z naměřených hodnot rovnou otevřete graf právě této hodnoty.</string>
+    <string name="description1">Tato aplikace slouží jako šikovný doplněk WiFi Teploměrů a serveru Teploty.info.\nPokud ještě nemáte WiFi Teploměr, navštivte Teploty.info pro další informace a e-shop.</string>
+    <string name="description2">Aktuální změřené hodnoty jsou zobrazeny přímo na ploše a automaticky se obnovují jednou za tři minuty - stačí si na volné místo přidat tzv. Widget \"WiFi Teploměr\". Ještě předtím je vhodné zadat přihlašovací údaje k serveru Teploty.info:</string>
+    <string name="description3">Nyní pokračujte na plochu (domácí obrazovku), kde si přidáte widget WiFi Teploměru:\n1) podržte prst na volném místě aspoň sekundu, vyskočí nabídka, zvolte Widgety.\n2) najděte v seznamu \"WiFi Teploměr\", vyberte ho a umístěte na volné místo na ploše.\n3) tahem za jeho okraje můžete libovolně změnit jeho rozměry.</string>
+    <string name="description4">Tipy:\n- ťuknutím v levé polovině widgetu (na jména senzorů) otevřete obrazovku na ovládání WiFi Teploměru.\n- ťuknutím na některou z naměřených hodnot rovnou otevřete graf právě této hodnoty.</string>
     <string name="values_at">Hodnoty v</string>
     <string name="visit_web">Navštívit Teploty.info</string>
     <string name="setup_login">Nastavit přihlašovací údaje</string>
