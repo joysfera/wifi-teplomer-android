@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -126,15 +127,21 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             String unit = sensor.getString("u");
             int range = sensor.getInt("r");
 
-            String form = (unit.equals("ppm") || unit.equals("imp") || unit.length() == 0) ? "%.0f %s" : "%.1f %s";
-            if (unit.length() == 0) unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
-            SpannableString s = new SpannableString(String.format(form, value, unit));
-            if (range != 0) {
-                int len = s.length() - unit.length() - 1;
-                s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
-                s.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, len, 0);
+            if (unit.length() == 0) {
+                unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
+                return new DataEntry(node, id, name, new SpannableString(unit), unit);
             }
-            return new DataEntry(node, id, name, s, unit);
+            else {
+                final String[] units = {"ppm", "ppb", "imp", "dBm", "s", "°"};
+                String form = Arrays.asList(units).contains(unit) ? "%.0f %s" : "%.1f %s";
+                SpannableString s = new SpannableString(String.format(form, value, unit));
+                if (range != 0) {
+                    int len = s.length() - unit.length() - 1;
+                    s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
+                    s.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, len, 0);
+                }
+                return new DataEntry(node, id, name, s, unit);
+            }
         } catch (JSONException e) {
             Log.e(getClass().getSimpleName(), "decode JSON exception");
         }
