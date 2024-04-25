@@ -7,10 +7,12 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 public class MyApplication extends Application {
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
         // called when screen orientation changes - widget must be updated, otherwise it'll stop responding

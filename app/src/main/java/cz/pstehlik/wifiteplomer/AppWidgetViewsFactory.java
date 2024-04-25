@@ -1,6 +1,5 @@
 package cz.pstehlik.wifiteplomer;
 
-import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,11 +30,16 @@ import java.util.Iterator;
 import javax.net.ssl.HttpsURLConnection;
 
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
-    private Context context;
-    private int appWidgetId;
-    private SharedPreferences teplotyPrefs = null;
+    private final Context context;
+    // private final int appWidgetId;
+    private final SharedPreferences teplotyPrefs;
+    private final ArrayList<DataEntry> arrayList = new ArrayList<>();
 
-    private ArrayList<DataEntry> arrayList = new ArrayList<>();
+    public AppWidgetViewsFactory(Context ctxt, Intent intent) {
+        this.context = ctxt;
+        // appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+        teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
+    }
 
     @Override
     public RemoteViews getViewAt(int position) {
@@ -62,12 +66,6 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         row.setOnClickFillInIntent(android.R.id.text1, i);
 
         return row;
-    }
-
-    public AppWidgetViewsFactory(Context ctxt, Intent intent) {
-        this.context = ctxt;
-        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-        teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
     }
 
     static public String getTempData(Context context) {
@@ -206,7 +204,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         }
     }
 
-    private class DataEntry {
+    private static class DataEntry {
         public String node;
         public String id;
         public String name;

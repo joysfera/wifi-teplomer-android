@@ -19,13 +19,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class WidgetProvider extends AppWidgetProvider {
-    public static String UPDATE_LIST = "UPDATE_LIST";
+    public static final String UPDATE_LIST = "UPDATE_LIST";
     static long lastForcedUpdateAt = 0;
 
     public static boolean turnAlarmOnOff(Context context, boolean turnOn) {
         boolean updated = false;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return updated;
+        if (alarmManager == null) return false;
         PendingIntent pendingIntent = myUpdateIntent(context);
 
         if (turnOn) {
@@ -128,14 +128,14 @@ public class WidgetProvider extends AppWidgetProvider {
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
         Log.d("WidgetProvider", "AppWidgetOptionsChanged!");
-
+/*
         // See the dimensions and
         Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
 
         // Get min width and height.
         int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
         int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
-/*
+
         RemoteViews widget = new RemoteViews(context.getPackageName(), R.layout.widget);
         widget.setTextViewTextSize(R.id.last_update, TypedValue.COMPLEX_UNIT_SP, 32);
         widget.setTextViewTextSize(R.id.temperatures,TypedValue.COMPLEX_UNIT_SP, 24);
@@ -159,8 +159,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
     private void updateAllWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.widget_night : R.layout.widget;
-        for(int i = 0; i < appWidgetIds.length; i++) {
-            int appWidgetId = appWidgetIds[i];
+        for (int appWidgetId : appWidgetIds) {
             RemoteViews widget = new RemoteViews(context.getPackageName(), wid);
             updateClickIntents(context, widget);
             appWidgetManager.updateAppWidget(appWidgetId, widget);
