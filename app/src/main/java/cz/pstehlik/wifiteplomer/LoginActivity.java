@@ -6,13 +6,10 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.AsyncTask;
-
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,6 +18,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import static cz.pstehlik.wifiteplomer.AppWidgetViewsFactory.getWidgetPrefsName;
 
 /**
  * A setup screen that configures login/password.
@@ -38,12 +39,17 @@ public class LoginActivity extends AppCompatActivity {
     private View mProgressView;
     private View mLoginFormView;
     private SeekBar mFontSize;
+    private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
+        // Get widget ID from intent
+        Intent intent = getIntent();
+        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+        Log.d("LoginActivity", "id = " + appWidgetId);
         mLoginView = findViewById(R.id.login);
         mPasswordView = findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -58,7 +64,8 @@ public class LoginActivity extends AppCompatActivity {
         });
         mFontSize = findViewById(R.id.fontsize);
 
-        final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+        final SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        Log.d("LoginActivity", String.format("Loading for id %d, prefs = %s", appWidgetId, teplotyPrefs));
         final String login = teplotyPrefs.getString("login", "");
         final String pwd = teplotyPrefs.getString("pwd", "");
         final int fontsize = teplotyPrefs.getInt("fontsize", 0);
@@ -113,7 +120,8 @@ public class LoginActivity extends AppCompatActivity {
             focusView.requestFocus();
         } else {
             // save credentials
-            final SharedPreferences teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+            final SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+            Log.d("LoginActivity", String.format("Saving for id %d, prefs = %s", appWidgetId, teplotyPrefs));
             final String o_login = teplotyPrefs.getString("login", "");
             final String o_pwd = teplotyPrefs.getString("pwd", "");
             final int o_fontsize = teplotyPrefs.getInt("fontsize", 0);
@@ -135,9 +143,15 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     // update widget
                     Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
-                    intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-                    int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(new ComponentName(getApplication(), WidgetProvider.class));
-                    intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                    if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        // Update only the specific widget
+                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
+                    } else {
+                        // Update all widgets if no specific widget ID
+                        intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+                        int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(new ComponentName(getApplication(), WidgetProvider.class));
+                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                    }
                     sendBroadcast(intent);
                 }
             }
@@ -180,7 +194,7 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            String data = AppWidgetViewsFactory.getTempData(getApplicationContext());
+            String data = AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId);
             // test if returned valid JSON
             return (data.startsWith("{\"cidla"));
         }

@@ -1,5 +1,6 @@
 package cz.pstehlik.wifiteplomer;
 
+import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,24 +33,31 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
     private final Context context;
-    // private final int appWidgetId;
+    private final int appWidgetId;
     private final SharedPreferences teplotyPrefs;
-    private final ArrayList<DataEntry> arrayList = new ArrayList<>();
+    private static final java.util.Map<Integer, ArrayList<DataEntry>> instanceData = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static String getWidgetPrefsName(int appWidgetId) { return "TeplotyPrefs_" + appWidgetId; }
 
     public AppWidgetViewsFactory(Context ctxt, Intent intent) {
         this.context = ctxt;
-        // appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-        teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
+        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+        teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        Log.d("AppWidgetViewsFactory", String.format("ctor for id %d, prefs = %s", appWidgetId, teplotyPrefs));
     }
 
     @Override
     public RemoteViews getViewAt(int position) {
+        // Use instance-specific data
+        ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
+        if (currentData == null) currentData = new ArrayList<>();
+
         int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.row_night : R.layout.row;
 
         RemoteViews row = new RemoteViews(context.getPackageName(), wid);
 
-        if (position >= 0 && position < arrayList.size()) {
-            DataEntry d = arrayList.get(position);
+        if (position >= 0 && position < currentData.size()) {
+            DataEntry d = currentData.get(position);
             final int fontsize = (teplotyPrefs != null) ? teplotyPrefs.getInt("fontsize", -1) : -1;
             if (fontsize >= 0) {
                 float size = Math.round(14 * (float)Math.pow(1.142857143, fontsize));
@@ -69,34 +77,40 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return row;
     }
 
-    static public String getTempData(Context context) {
-        Log.d("AppWidgetViewsFactory", "getTempData()");
+    static public String getTempData(Context context, int appWidgetId) {
+        Log.d("AppWidgetViewsFactory", "getTempData(" + appWidgetId + ")");
         StringBuilder json = new StringBuilder();
-        HttpsURLConnection urlConnection = null;
-        try {
-            URL url = new URL(getTeplotyInfoUrl("data2.php", context));
-            urlConnection = (HttpsURLConnection) url.openConnection();
-            int status = urlConnection.getResponseCode();
-            if (status == 200) {
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        json.append(line);
+        String urls = getTeplotyInfoUrl("data2.php", context, appWidgetId);
+        Log.d("AppWidgetViewsFactory", "URL = " + urls);
+        if (! urls.isEmpty()) {
+            HttpsURLConnection urlConnection = null;
+            try {
+                URL url = new URL(urls);
+                urlConnection = (HttpsURLConnection) url.openConnection();
+                int status = urlConnection.getResponseCode();
+                if (status == 200) {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            json.append(line);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                Log.e("WiFi Teploměr", "getTempData exception: " + e.getMessage());
+            } finally {
+                if (urlConnection != null) urlConnection.disconnect();
             }
-        } catch (Exception e) {
-            Log.e("WiFi Teploměr", "getTempData exception");
-        } finally {
-            if (urlConnection != null) urlConnection.disconnect();
         }
         return json.toString();
     }
 
-    static public String getTeplotyInfoUrl(String page, Context context) {
-        final SharedPreferences teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
+    static public String getTeplotyInfoUrl(String page, Context context, int appWidgetId) {
+        final SharedPreferences teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        Log.d("AppWidgetViewsFactory", String.format("getTeplotyInfoUrl for id %d, prefs = %s", appWidgetId, teplotyPrefs));
         final String login = teplotyPrefs.getString("login", "");
         final String pwd = teplotyPrefs.getString("pwd", "");
+        if (login.isEmpty()) return "";
         try {
             return String.format("https://teploty.info/%s?login=%s&pwd=%s", page, URLEncoder.encode(login, "UTF-8"), URLEncoder.encode(pwd, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -106,17 +120,21 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onCreate() {
-        arrayList.clear();
+        Log.d("AppWidgetViewsFactory", "onCreate");
+        instanceData.put(appWidgetId, new ArrayList<>());
     }
 
     @Override
     public void onDestroy() {
-        // no-op
+        Log.d("AppWidgetViewsFactory", "onCreate");
+        instanceData.remove(appWidgetId);
     }
 
     @Override
     public int getCount() {
-        return (arrayList.size());
+        ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
+        if (currentData == null) return 0;
+        return currentData.size();
     }
 
     private DataEntry getDataEntry(String node, JSONObject sensor) {
@@ -127,7 +145,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             String unit = sensor.getString("u");
             int range = sensor.getInt("r");
 
-            if (unit.length() == 0) {
+            if (unit.isEmpty()) {
                 unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
                 return new DataEntry(node, id, name, new SpannableString(unit), unit);
             }
@@ -143,7 +161,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 return new DataEntry(node, id, name, s, unit);
             }
         } catch (JSONException e) {
-            Log.e(getClass().getSimpleName(), "decode JSON exception");
+            Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
         }
         return new DataEntry();
     }
@@ -170,13 +188,17 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onDataSetChanged() {
+        Log.d("AppWidgetViewsFactory", "onDataSetChanged for " + appWidgetId);
         getTemperatures();
     }
 
     private void getTemperatures() {
-        String json = getTempData(context.getApplicationContext());
+        String json = getTempData(context.getApplicationContext(), appWidgetId);
+        if (json.isEmpty()) return;
         ArrayList<JSONObject> list = new ArrayList<>();
-        arrayList.clear();
+        ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
+        if (currentData == null) currentData = new ArrayList<>();
+        currentData.clear();
         try {
             JSONObject reader = new JSONObject(json);
             JSONObject cidla = reader.getJSONObject("cidla");
@@ -203,11 +225,12 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         } else pos++;
                     }
 
-                    arrayList.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
+                    currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
                 }
             }
+            instanceData.put(appWidgetId, currentData);
         } catch (JSONException e) {
-            Log.e(getClass().getSimpleName(), "decode JSON exception: " + json);
+            Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
         }
     }
 

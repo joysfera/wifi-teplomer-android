@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.widget.RemoteViews;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 public class WidgetProvider extends AppWidgetProvider {
@@ -26,7 +28,8 @@ public class WidgetProvider extends AppWidgetProvider {
         boolean updated = false;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return false;
-        PendingIntent pendingIntent = myUpdateIntent(context);
+        PendingIntent pendingIntent = myUpdateIntentAll(context);
+        Log.d("WidgetProvider", "turnAlarmOnOff(" + turnOn +")");
 
         if (turnOn) {
             long interval = 3 * 60 * 1000;
@@ -50,31 +53,47 @@ public class WidgetProvider extends AppWidgetProvider {
         return updated;
     }
 
-    private static PendingIntent myUpdateIntent(Context context) {
+    private static PendingIntent myUpdateIntent(Context context, int appWidgetId) {
         Intent in = new Intent(context, WidgetProvider.class);
         in.setAction(UPDATE_LIST);
-        Log.d("WidgetProvider", "myUpdateIntent generated to refresh widget in timely manner");
+        in.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        Log.d("WidgetProvider", String.format("myUpdateIntent generated to refresh widget %d in timely manner", appWidgetId));
+        return PendingIntent.getBroadcast(context, appWidgetId, in, PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static PendingIntent myUpdateIntentAll(Context context) {
+        Intent in = new Intent(context, WidgetProvider.class);
+        in.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName thisWidget = new ComponentName(context, WidgetProvider.class);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
+        in.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
+
+        Log.d("WidgetProvider", String.format("myUpdateIntentAll generated to refresh ALL widgets"));
         return PendingIntent.getBroadcast(context, 0, in, PendingIntent.FLAG_IMMUTABLE);
     }
 
-    private void updateClickIntents(Context context, RemoteViews widget) {
+    private void updateClickIntents(Context context, RemoteViews widget, int appWidgetId) {
         Intent svcIntent = new Intent(context, WidgetService.class);
-        //svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
-        //svcIntent.setData(Uri.parse(svcIntent .toUri(Intent.URI_INTENT_SCHEME)));
+        svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
 
         widget.setRemoteAdapter(R.id.temperatures, svcIntent);
 
         Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
-        PendingIntent clickPI = PendingIntent.getBroadcast(context, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+        clickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent clickPI = PendingIntent.getBroadcast(context, appWidgetId, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
 
         // Create an Intent to launch ConfigurationActivity
         Intent intent = new Intent(context, LoginActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, appWidgetId, intent, PendingIntent.FLAG_IMMUTABLE);
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
         // Create an Intent to force updating widget
-        widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context));
+        widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context, appWidgetId));
 
         // update time
         widget.setTextViewText(R.id.last_update, context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
@@ -101,21 +120,24 @@ public class WidgetProvider extends AppWidgetProvider {
 
         final String action = (intent != null ? intent.getAction() : null);
         if (UPDATE_LIST.equals(action)) {
-            Log.d("WidgetProvider", "onReceive(UPDATE_LIST)");
+            int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            Log.d("WidgetProvider", "onReceive(UPDATE_LIST, " + appWidgetId +")");
+            if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return;
             if (isScreenOn(context)) {
                 // something is calling the updateWidget() twice
                 Log.d("WidgetProvider", "trying to force-enabling timer and re-registering screen intents - maybe unnecessarily?");
                 boolean updated = turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
                 MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
                 if (!updated)
-                    updateWidget(context);
+                    updateWidget(context, appWidgetId);
             }
         }
         else if ("SABAKA_KLIK".equals(action)) {
             String sensor = intent.getStringExtra("EXTRA_SABAKA_SENSOR");
-            String url = AppWidgetViewsFactory.getTeplotyInfoUrl("profile.php", context);
+            int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            String url = AppWidgetViewsFactory.getTeplotyInfoUrl("profile.php", context, appWidgetId);
             if (sensor != null && !sensor.isEmpty()) {
-                url = AppWidgetViewsFactory.getTeplotyInfoUrl("graph.php", context) + "&sensor=" + sensor;
+                url = AppWidgetViewsFactory.getTeplotyInfoUrl("graph.php", context, appWidgetId) + "&sensor=" + sensor;
             }
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -148,8 +170,29 @@ public class WidgetProvider extends AppWidgetProvider {
     public void onDisabled(Context context) {
         super.onDisabled(context);
         Log.d("WidgetProvider", "onDisabled() => widget removed!");
-        MyBroadcastReceiver.unregisterScreenReceiver(context);
-        turnAlarmOnOff(context, false);
+    }
+
+    @Override
+    public void onDeleted(Context context, int[] appWidgetIds) {
+        super.onDeleted(context, appWidgetIds);
+        Log.d("WidgetProvider", "onDeleted called for " + Arrays.toString(appWidgetIds));
+
+        for (int appWidgetId : appWidgetIds) {
+            // Clean up preferences for this widget ID
+            SharedPreferences prefs = context.getSharedPreferences(AppWidgetViewsFactory.getWidgetPrefsName(appWidgetId), 0);
+            prefs.edit().clear().apply();
+            Log.d("WidgetProvider", "Deleted prefs for widget id " + appWidgetId);
+        }
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName thisWidget = new ComponentName(context, WidgetProvider.class);
+        int[] remainingWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
+
+        if (remainingWidgetIds.length == 0) {
+            Log.d("WidgetProvider", "Turning off alarm because this was the last instance");
+            turnAlarmOnOff(context, false);
+            MyBroadcastReceiver.unregisterScreenReceiver(context);
+        }
     }
 
     private boolean isScreenOn(Context context) {
@@ -159,17 +202,17 @@ public class WidgetProvider extends AppWidgetProvider {
 
     private void updateAllWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.widget_night : R.layout.widget;
+        Log.d("WidgetProvider", "updateAllWidgets(" + Arrays.toString(appWidgetIds) +")");
         for (int appWidgetId : appWidgetIds) {
             RemoteViews widget = new RemoteViews(context.getPackageName(), wid);
-            updateClickIntents(context, widget);
+            updateClickIntents(context, widget, appWidgetId);
             appWidgetManager.updateAppWidget(appWidgetId, widget);
         }
     }
-    private void updateWidget(Context context) {
-        Log.d("WidgetProvider", "updateWidget()");
-
+    private void updateWidget(Context context, int appWidgetId) {
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, WidgetProvider.class));
+        Log.d("WidgetProvider", "updateWidget(" + appWidgetId + ")");
+        int[] appWidgetIds = new int[]{appWidgetId};
         updateAllWidgets(context, appWidgetManager, appWidgetIds);
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.temperatures);
     }
