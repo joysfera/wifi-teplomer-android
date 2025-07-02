@@ -29,7 +29,7 @@ public class WidgetProvider extends AppWidgetProvider {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return false;
         PendingIntent pendingIntent = myUpdateIntentAll(context);
-        Log.d("WidgetProvider", "turnAlarmOnOff(" + turnOn +")");
+        Log.d("WidgetProvider", "turnAlarmOnOff(" + turnOn + ")");
 
         if (turnOn) {
             long interval = 3 * 60 * 1000;
@@ -64,12 +64,13 @@ public class WidgetProvider extends AppWidgetProvider {
     private static PendingIntent myUpdateIntentAll(Context context) {
         Intent in = new Intent(context, WidgetProvider.class);
         in.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-
+        in.setAction(UPDATE_LIST);
+/*
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName thisWidget = new ComponentName(context, WidgetProvider.class);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
         in.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
-
+*/
         Log.d("WidgetProvider", String.format("myUpdateIntentAll generated to refresh ALL widgets"));
         return PendingIntent.getBroadcast(context, 0, in, PendingIntent.FLAG_IMMUTABLE);
     }
@@ -100,16 +101,25 @@ public class WidgetProvider extends AppWidgetProvider {
     }
 
     @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+        Log.d("WidgetProvider", "onEnabled() => first widget instance added!");
+/*
+        // Enable timer and register screen receiver ONLY when the first widget is enabled
+        turnAlarmOnOff(context, true);
+        MyBroadcastReceiver.registerScreenReceiver(context);
+ */
+    }
+
+    @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 
         Log.d("WidgetProvider", "onUpdate(" + appWidgetIds.length + ") => widget added?");
-
         // this used to be in onEnabled() but that was not called everytime, unfortunately
         turnAlarmOnOff(context, true); // enable timer only if screen is on
         MyBroadcastReceiver.registerScreenReceiver(context);
         // end of what used to be in onEnabled()
-
-        updateAllWidgets(context, appWidgetManager, appWidgetIds);
+        updateListOfWidgets(context, appWidgetManager, appWidgetIds);
 
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
@@ -122,7 +132,6 @@ public class WidgetProvider extends AppWidgetProvider {
         if (UPDATE_LIST.equals(action)) {
             int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             Log.d("WidgetProvider", "onReceive(UPDATE_LIST, " + appWidgetId +")");
-            if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return;
             if (isScreenOn(context)) {
                 // something is calling the updateWidget() twice
                 Log.d("WidgetProvider", "trying to force-enabling timer and re-registering screen intents - maybe unnecessarily?");
@@ -130,6 +139,9 @@ public class WidgetProvider extends AppWidgetProvider {
                 MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
                 if (!updated)
                     updateWidget(context, appWidgetId);
+            }
+            else {
+                Log.d("WidgetProvider", "Screen is OFF so no updating necessary");
             }
         }
         else if ("SABAKA_KLIK".equals(action)) {
@@ -200,9 +212,9 @@ public class WidgetProvider extends AppWidgetProvider {
         return (mgr != null) && mgr.isScreenOn();
     }
 
-    private void updateAllWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
+    private void updateListOfWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         int wid = (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES ? R.layout.widget_night : R.layout.widget;
-        Log.d("WidgetProvider", "updateAllWidgets(" + Arrays.toString(appWidgetIds) +")");
+        Log.d("WidgetProvider", "updateListOfWidgets(" + Arrays.toString(appWidgetIds) +")");
         for (int appWidgetId : appWidgetIds) {
             RemoteViews widget = new RemoteViews(context.getPackageName(), wid);
             updateClickIntents(context, widget, appWidgetId);
@@ -211,9 +223,16 @@ public class WidgetProvider extends AppWidgetProvider {
     }
     private void updateWidget(Context context, int appWidgetId) {
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int[] appWidgetIds;
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            appWidgetIds = new int[]{appWidgetId};
+        }
+        else {
+            ComponentName thisWidget = new ComponentName(context, WidgetProvider.class);
+            appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
+        }
         Log.d("WidgetProvider", "updateWidget(" + appWidgetId + ")");
-        int[] appWidgetIds = new int[]{appWidgetId};
-        updateAllWidgets(context, appWidgetManager, appWidgetIds);
+        updateListOfWidgets(context, appWidgetManager, appWidgetIds);
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.temperatures);
     }
 }
