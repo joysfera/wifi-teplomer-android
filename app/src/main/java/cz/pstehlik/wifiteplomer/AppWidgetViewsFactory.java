@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -96,8 +97,8 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         }
                     }
                 }
-            } catch (Exception e) {
-                Log.e("WiFi Teploměr", "getTempData exception: " + e.getMessage());
+            } catch (IOException e) {
+                Log.e("WiFi Teploměr", "getTempData exception: " + e.getStackTrace());
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
             }

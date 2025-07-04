@@ -23,4 +23,5 @@
     <string name="value_on">On</string>
     <string name="value_off">Off</string>
     <string name="font_size">Set Font Size</string>
+    <string name="title_activity_select_sensor">Select Sensors</string>
 </resources>
