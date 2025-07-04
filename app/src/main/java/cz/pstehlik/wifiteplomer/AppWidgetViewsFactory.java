@@ -29,6 +29,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -37,6 +39,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     private final int appWidgetId;
     private final SharedPreferences teplotyPrefs;
     private static final java.util.Map<Integer, ArrayList<DataEntry>> instanceData = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public static String getWidgetPrefsName(int appWidgetId) { return "TeplotyPrefs_" + appWidgetId; }
 
@@ -78,16 +81,25 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return row;
     }
 
-    static public String getTempData(Context context, int appWidgetId) {
+    public interface TempDataCallback {
+        void onResult(String data);
+        void onError(Exception e);
+    }
+
+    static public void getTempData(Context context, int appWidgetId, TempDataCallback callback) {
         Log.d("AppWidgetViewsFactory", "getTempData(" + appWidgetId + ")");
-        StringBuilder json = new StringBuilder();
-        String urls = getTeplotyInfoUrl("data2.php", context, appWidgetId);
-        Log.d("AppWidgetViewsFactory", "URL = " + urls);
-        if (! urls.isEmpty()) {
+        String url = getTeplotyInfoUrl("data2.php", context, appWidgetId);
+        Log.d("AppWidgetViewsFactory", "URL = " + url);
+        if (url.isEmpty()) {
+            callback.onResult("");
+            return;
+        }
+        // TODO implement caching by URL here
+        executorService.execute(() -> {
             HttpsURLConnection urlConnection = null;
+            StringBuilder json = new StringBuilder();
             try {
-                URL url = new URL(urls);
-                urlConnection = (HttpsURLConnection) url.openConnection();
+                urlConnection = (HttpsURLConnection) new URL(url).openConnection();
                 int status = urlConnection.getResponseCode();
                 if (status == 200) {
                     try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
@@ -97,13 +109,18 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         }
                     }
                 }
+                callback.onResult(json.toString());
             } catch (IOException e) {
                 Log.e("WiFi Teploměr", "getTempData exception: " + e.getStackTrace());
+                callback.onError(e);
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
             }
-        }
-        return json.toString();
+        });
+    }
+
+    public static void shutdown() {
+        executorService.shutdown();
     }
 
     static public String getTeplotyInfoUrl(String page, Context context, int appWidgetId) {
@@ -194,45 +211,54 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     private void getTemperatures() {
-        String json = getTempData(context.getApplicationContext(), appWidgetId);
-        if (json.isEmpty()) return;
-        ArrayList<JSONObject> list = new ArrayList<>();
-        ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
-        if (currentData == null) currentData = new ArrayList<>();
-        currentData.clear();
-        try {
-            JSONObject reader = new JSONObject(json);
-            JSONObject cidla = reader.getJSONObject("cidla");
-            Iterator<?> nodes = cidla.keys();
-            while (nodes.hasNext()) {
-                String node = (String) nodes.next();
-                JSONArray data = cidla.getJSONArray(node);
-                list.clear();
-                for (int i = 0; i < data.length(); i++) {
-                    list.add(data.getJSONObject(i));
-                }
+        getTempData(context.getApplicationContext(), appWidgetId, new TempDataCallback() {
+            @Override
+            public void onResult(String json) {
+                if (json.isEmpty()) return;
+                ArrayList<JSONObject> list = new ArrayList<>();
+                ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
+                if (currentData == null) currentData = new ArrayList<>();
+                currentData.clear();
+                try {
+                    JSONObject reader = new JSONObject(json);
+                    JSONObject cidla = reader.getJSONObject("cidla");
+                    Iterator<?> nodes = cidla.keys();
+                    while (nodes.hasNext()) {
+                        String node = (String) nodes.next();
+                        JSONArray data = cidla.getJSONArray(node);
+                        list.clear();
+                        for (int i = 0; i < data.length(); i++) {
+                            list.add(data.getJSONObject(i));
+                        }
 
-                for (int position = 0; position < list.size(); position++) {
-                    DataEntry x = getDataEntry(node, list.get(position));
-                    SpannableStringBuilder s = new SpannableStringBuilder();
-                    s.append(x.value);
-                    int pos = position + 1;
-                    while (pos < list.size()) {
-                        DataEntry y = getDataEntry(node, list.get(pos));
-                        if (x.name.equals(y.name)) {
-                            s.append(' ');
-                            s.append(y.value);
-                            list.remove(pos);
-                        } else pos++;
+                        for (int position = 0; position < list.size(); position++) {
+                            DataEntry x = getDataEntry(node, list.get(position));
+                            SpannableStringBuilder s = new SpannableStringBuilder();
+                            s.append(x.value);
+                            int pos = position + 1;
+                            while (pos < list.size()) {
+                                DataEntry y = getDataEntry(node, list.get(pos));
+                                if (x.name.equals(y.name)) {
+                                    s.append(' ');
+                                    s.append(y.value);
+                                    list.remove(pos);
+                                } else pos++;
+                            }
+
+                            currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
+                        }
                     }
-
-                    currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
+                    instanceData.put(appWidgetId, currentData);
+                } catch (JSONException e) {
+                    Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
                 }
             }
-            instanceData.put(appWidgetId, currentData);
-        } catch (JSONException e) {
-            Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
-        }
+
+            @Override
+            public void onError(Exception e) {
+                instanceData.put(appWidgetId, new ArrayList<>());
+            }
+        });
     }
 
     private static class DataEntry {

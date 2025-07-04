@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -26,11 +25,6 @@ import static cz.pstehlik.wifiteplomer.AppWidgetViewsFactory.getWidgetPrefsName;
  * A setup screen that configures login/password.
  */
 public class LoginActivity extends AppCompatActivity {
-
-    /**
-     * Keep track of the login task to ensure we can cancel it if requested.
-     */
-    private UserLoginTask mAuthTask = null;
 
     // UI references.
     private EditText mLoginView;
@@ -101,10 +95,6 @@ public class LoginActivity extends AppCompatActivity {
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
-
         // Reset errors.
         mLoginView.setError(null);
         mPasswordView.setError(null);
@@ -147,8 +137,30 @@ public class LoginActivity extends AppCompatActivity {
                     // Show a progress spinner, and kick off a background task to
                     // perform the user login attempt.
                     showProgress(true);
-                    mAuthTask = new UserLoginTask();
-                    mAuthTask.execute((Void) null);
+                    AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId, new AppWidgetViewsFactory.TempDataCallback() {
+                        @Override
+                        public void onResult(String data) {
+                            runOnUiThread(() -> {
+                                showProgress(false);
+                                if (data != null && data.startsWith("{\"cidla")) {
+                                    updateWidget();
+                                    finish();
+                                } else {
+                                    mPasswordView.setError(getString(R.string.error_incorrect_password));
+                                    mPasswordView.requestFocus();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            runOnUiThread(() -> {
+                                showProgress(false);
+                                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                                mPasswordView.requestFocus();
+                            });
+                        }
+                    });
                     finish = false;
                 } else {
                     // update widget
@@ -194,45 +206,16 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Represents an asynchronous login task used to test the authentication
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        UserLoginTask() {
+    private void updateWidget() {
+        Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
+        } else {
+            intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
+            int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(
+                    new ComponentName(getApplication(), WidgetProvider.class));
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
         }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            String data = AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId);
-            // test if returned valid JSON
-            return (data.startsWith("{\"cidla"));
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                // update widget
-                Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
-                intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-                int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(new ComponentName(getApplication(), WidgetProvider.class));
-                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
-                sendBroadcast(intent);
-
-                finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
+        sendBroadcast(intent);
     }
 }

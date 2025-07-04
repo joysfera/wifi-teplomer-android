@@ -58,8 +58,19 @@ public class SelectSensorActivity extends AppCompatActivity {
     private void loadJsonData() {
         Intent intent = getIntent();
         int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
-        String data = "";// AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId); // TODO FIXME must run asynchronously in a background threa
-        parseJsonData(data);
+        AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId, new AppWidgetViewsFactory.TempDataCallback() {
+                    @Override
+                    public void onResult(String data) {
+                        runOnUiThread(() -> {
+                            parseJsonData(data);
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e(getClass().getSimpleName(), "Error downloading data: " + e.getMessage());
+                    }
+                });
     }
 
     private void parseJsonData(final String data) {
