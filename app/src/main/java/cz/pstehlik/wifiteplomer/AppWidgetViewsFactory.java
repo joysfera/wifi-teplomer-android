@@ -54,7 +54,6 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     @Override
     public RemoteViews getViewAt(int position) {
         // Use instance-specific data
-        Log.d(TAG, "fetching data for ID = " + appWidgetId);
         ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
         if (currentData == null) currentData = new ArrayList<>();
 
@@ -96,29 +95,42 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             callback.onResult("");
             return;
         }
-        // TODO implement caching by URL here
         executorService.execute(() -> {
-            HttpsURLConnection urlConnection = null;
-            StringBuilder json = new StringBuilder();
-            try {
-                urlConnection = (HttpsURLConnection) new URL(url).openConnection();
-                int status = urlConnection.getResponseCode();
-                if (status == 200) {
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
-                        String line;
-                        while ((line = br.readLine()) != null) {
-                            json.append(line);
-                        }
-                    }
-                }
-                callback.onResult(json.toString());
-            } catch (IOException e) {
-                Log.e(TAG, "getTempData exception: " + e.getMessage());
-                callback.onError(e);
-            } finally {
-                if (urlConnection != null) urlConnection.disconnect();
+            String result = performHttpRequest(url);
+            if (result != null) {
+                callback.onResult(result);
+            } else {
+                callback.onError(new IOException("Failed to fetch data"));
             }
         });
+    }
+
+    private static String performHttpRequest(String url) {
+        HttpsURLConnection urlConnection = null;
+        StringBuilder json = new StringBuilder();
+        try {
+            urlConnection = (HttpsURLConnection) new URL(url).openConnection();
+            urlConnection.setConnectTimeout(5000);  // 5 seconds
+            urlConnection.setReadTimeout(10000);    // 10 seconds
+
+            int status = urlConnection.getResponseCode();
+            if (status == 200) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        json.append(line);
+                    }
+                }
+                return json.toString();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "HTTP request exception: " + e.getMessage());
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+        }
+        return null;
     }
 
     public static void shutdown() {
@@ -213,56 +225,67 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         getTemperatures();
     }
 
+    // this method uses intentionally synchronous HTTP downloading so that the widget doesn't start updating before fresh data is finished fetching
+    // widget updating happens in a background thread by design anyway so Android is OK with this being synchronous
     private void getTemperatures() {
-        getTempData(context.getApplicationContext(), appWidgetId, new TempDataCallback() {
-            @Override
-            public void onResult(String json) {
-                if (json.isEmpty()) return;
-                ArrayList<JSONObject> list = new ArrayList<>();
-                ArrayList<DataEntry> currentData = new ArrayList<>();
-                try {
-                    JSONObject reader = new JSONObject(json);
-                    JSONObject cidla = reader.getJSONObject("cidla");
-                    Iterator<?> nodes = cidla.keys();
-                    while (nodes.hasNext()) {
-                        String node = (String) nodes.next();
-                        JSONArray data = cidla.getJSONArray(node);
-                        list.clear();
-                        for (int i = 0; i < data.length(); i++) {
-                            list.add(data.getJSONObject(i));
-                        }
+        String url = getTeplotyInfoUrl("data2.php", context, appWidgetId);
+        Log.d(TAG, "Sync URL = " + url);
+        if (url.isEmpty()) {
+            instanceData.put(appWidgetId, new ArrayList<>());
+            return;
+        }
 
-                        for (int position = 0; position < list.size(); position++) {
-                            DataEntry x = getDataEntry(node, list.get(position));
-                            SpannableStringBuilder s = new SpannableStringBuilder();
-                            s.append(x.value);
-                            int pos = position + 1;
-                            while (pos < list.size()) {
-                                DataEntry y = getDataEntry(node, list.get(pos));
-                                if (x.name.equals(y.name)) {
-                                    s.append(' ');
-                                    s.append(y.value);
-                                    list.remove(pos);
-                                } else pos++;
-                            }
+        String jsonResult = performHttpRequest(url);
+        if (jsonResult != null) {
+            processJsonData(jsonResult);
+        } else {
+            instanceData.put(appWidgetId, new ArrayList<>());
+        }
+    }
 
-                            currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
-                        }
+    private void processJsonData(String json) {
+        if (json.isEmpty()) {
+            instanceData.put(appWidgetId, new ArrayList<>());
+            return;
+        }
+
+        ArrayList<JSONObject> list = new ArrayList<>();
+        ArrayList<DataEntry> currentData = new ArrayList<>();
+        try {
+            JSONObject reader = new JSONObject(json);
+            JSONObject cidla = reader.getJSONObject("cidla");
+            Iterator<?> nodes = cidla.keys();
+            while (nodes.hasNext()) {
+                String node = (String) nodes.next();
+                JSONArray data = cidla.getJSONArray(node);
+                list.clear();
+                for (int i = 0; i < data.length(); i++) {
+                    list.add(data.getJSONObject(i));
+                }
+
+                for (int position = 0; position < list.size(); position++) {
+                    DataEntry x = getDataEntry(node, list.get(position));
+                    SpannableStringBuilder s = new SpannableStringBuilder();
+                    s.append(x.value);
+                    int pos = position + 1;
+                    while (pos < list.size()) {
+                        DataEntry y = getDataEntry(node, list.get(pos));
+                        if (x.name.equals(y.name)) {
+                            s.append(' ');
+                            s.append(y.value);
+                            list.remove(pos);
+                        } else pos++;
                     }
-                    instanceData.put(appWidgetId, currentData);
-                    Log.d(TAG, "freshly downloaded data for ID = " + appWidgetId);
-                } catch (JSONException e) {
-                    instanceData.put(appWidgetId, new ArrayList<>());
-                    Log.e(TAG, "decode JSON exception: " + e.getMessage());
+
+                    currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
                 }
             }
-
-            @Override
-            public void onError(Exception e) {
-                instanceData.put(appWidgetId, new ArrayList<>());
-                Log.e(TAG, "error downloading data: " + e.getMessage());
-            }
-        });
+            instanceData.put(appWidgetId, currentData);
+            Log.d(TAG, "freshly downloaded data for ID = " + appWidgetId);
+        } catch (JSONException e) {
+            instanceData.put(appWidgetId, new ArrayList<>());
+            Log.e(TAG, "decode JSON exception: " + e.getMessage());
+        }
     }
 
     private static class DataEntry {
