@@ -35,6 +35,7 @@ import java.util.concurrent.Executors;
 import javax.net.ssl.HttpsURLConnection;
 
 public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
+    private static final String TAG = "AppWidgetViewsFactory";
     private final Context context;
     private final int appWidgetId;
     private final SharedPreferences teplotyPrefs;
@@ -47,12 +48,13 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         this.context = ctxt;
         appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
         teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
-        Log.d("AppWidgetViewsFactory", String.format("ctor for id %d, prefs = %s", appWidgetId, teplotyPrefs));
+        Log.d(TAG, String.format("ctor for id %d, prefs = %s", appWidgetId, teplotyPrefs));
     }
 
     @Override
     public RemoteViews getViewAt(int position) {
         // Use instance-specific data
+        Log.d(TAG, "fetching data for ID = " + appWidgetId);
         ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
         if (currentData == null) currentData = new ArrayList<>();
 
@@ -87,9 +89,9 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     static public void getTempData(Context context, int appWidgetId, TempDataCallback callback) {
-        Log.d("AppWidgetViewsFactory", "getTempData(" + appWidgetId + ")");
+        Log.d(TAG, "getTempData(" + appWidgetId + ")");
         String url = getTeplotyInfoUrl("data2.php", context, appWidgetId);
-        Log.d("AppWidgetViewsFactory", "URL = " + url);
+        Log.d(TAG, "URL = " + url);
         if (url.isEmpty()) {
             callback.onResult("");
             return;
@@ -111,7 +113,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 }
                 callback.onResult(json.toString());
             } catch (IOException e) {
-                Log.e("WiFi Teploměr", "getTempData exception: " + e.getStackTrace());
+                Log.e(TAG, "getTempData exception: " + e.getMessage());
                 callback.onError(e);
             } finally {
                 if (urlConnection != null) urlConnection.disconnect();
@@ -125,7 +127,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     static public String getTeplotyInfoUrl(String page, Context context, int appWidgetId) {
         final SharedPreferences teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
-        Log.d("AppWidgetViewsFactory", String.format("getTeplotyInfoUrl for id %d, prefs = %s", appWidgetId, teplotyPrefs));
+        Log.d(TAG, String.format("getTeplotyInfoUrl for id %d, prefs = %s", appWidgetId, teplotyPrefs));
         final String login = teplotyPrefs.getString("login", "");
         final String pwd = teplotyPrefs.getString("pwd", "");
         if (login.isEmpty()) return "";
@@ -138,18 +140,19 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onCreate() {
-        Log.d("AppWidgetViewsFactory", "onCreate");
+        Log.d(TAG, "onCreate");
         instanceData.put(appWidgetId, new ArrayList<>());
     }
 
     @Override
     public void onDestroy() {
-        Log.d("AppWidgetViewsFactory", "onCreate");
+        Log.d(TAG, "onDestroy");
         instanceData.remove(appWidgetId);
     }
 
     @Override
     public int getCount() {
+        Log.d(TAG, "getCount(" + appWidgetId +")");
         ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
         if (currentData == null) return 0;
         return currentData.size();
@@ -179,7 +182,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 return new DataEntry(node, id, name, s, unit);
             }
         } catch (JSONException e) {
-            Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
+            Log.e(TAG, "decode JSON exception: " + e.getMessage());
         }
         return new DataEntry();
     }
@@ -206,7 +209,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onDataSetChanged() {
-        Log.d("AppWidgetViewsFactory", "onDataSetChanged for " + appWidgetId);
+        Log.d(TAG, "onDataSetChanged for " + appWidgetId);
         getTemperatures();
     }
 
@@ -216,9 +219,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             public void onResult(String json) {
                 if (json.isEmpty()) return;
                 ArrayList<JSONObject> list = new ArrayList<>();
-                ArrayList<DataEntry> currentData = instanceData.get(appWidgetId);
-                if (currentData == null) currentData = new ArrayList<>();
-                currentData.clear();
+                ArrayList<DataEntry> currentData = new ArrayList<>();
                 try {
                     JSONObject reader = new JSONObject(json);
                     JSONObject cidla = reader.getJSONObject("cidla");
@@ -249,14 +250,17 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         }
                     }
                     instanceData.put(appWidgetId, currentData);
+                    Log.d(TAG, "freshly downloaded data for ID = " + appWidgetId);
                 } catch (JSONException e) {
-                    Log.e(getClass().getSimpleName(), "decode JSON exception: " + e.getMessage());
+                    instanceData.put(appWidgetId, new ArrayList<>());
+                    Log.e(TAG, "decode JSON exception: " + e.getMessage());
                 }
             }
 
             @Override
             public void onError(Exception e) {
                 instanceData.put(appWidgetId, new ArrayList<>());
+                Log.e(TAG, "error downloading data: " + e.getMessage());
             }
         });
     }
