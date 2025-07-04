@@ -105,6 +105,35 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         });
     }
 
+    // HTTP request with retry logic for post-wakeup scenarios
+    private static String performHttpRequestWithRetry(String url) {
+        int maxRetries = 3;
+        int retryDelay = 1000; // 1 second
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            Log.d(TAG, "HTTP request attempt " + attempt + "/" + maxRetries);
+
+            String result = performHttpRequest(url);
+            if (result != null) {
+                return result;
+            }
+
+            // If not the last attempt, wait before retry
+            if (attempt < maxRetries) {
+                try {
+                    Thread.sleep(retryDelay);
+                    retryDelay *= 2; // Exponential backoff
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        Log.w(TAG, "All HTTP request attempts failed");
+        return null;
+    }
+
     private static String performHttpRequest(String url) {
         HttpsURLConnection urlConnection = null;
         StringBuilder json = new StringBuilder();
@@ -235,7 +264,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             return;
         }
 
-        String jsonResult = performHttpRequest(url);
+        String jsonResult = performHttpRequestWithRetry(url);
         if (jsonResult != null) {
             processJsonData(jsonResult);
         } else {
