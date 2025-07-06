@@ -168,9 +168,14 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     static public String getTeplotyInfoUrl(String page, Context context, int appWidgetId) {
-        final SharedPreferences teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        SharedPreferences teplotyPrefs = context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
         Log.d(TAG, String.format("getTeplotyInfoUrl for id %d, prefs = %s", appWidgetId, teplotyPrefs));
-        final String login = teplotyPrefs.getString("login", "");
+        String login = teplotyPrefs.getString("login", "");
+        if (login.isEmpty()) {
+            // fallback to settings from version 1.x
+            teplotyPrefs = context.getSharedPreferences("TeplotyPrefs", 0);
+            login = teplotyPrefs.getString("login", "");
+        }
         final String pwd = teplotyPrefs.getString("pwd", "");
         if (login.isEmpty()) return "";
         try {
