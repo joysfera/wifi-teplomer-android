@@ -17,6 +17,7 @@
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:paddingLeft="3dp"
+            android:paddingTop="4dp"
             android:textColor="#EEEEEE"
             android:textSize="18sp" />
 
@@ -26,6 +27,7 @@
             android:layout_height="wrap_content"
             android:background="#222222"
             android:gravity="right"
+            android:paddingTop="4dp"
             android:src="@android:drawable/ic_popup_sync" />
 
         <ImageButton
@@ -35,8 +37,9 @@
             android:layout_marginLeft="8dp"
             android:background="#222222"
             android:gravity="right"
+            android:paddingTop="4dp"
             android:paddingRight="8dp"
-            android:src="@android:drawable/ic_menu_edit" />
+            android:src="@drawable/settings_32px" />
 
     </LinearLayout>
 

@@ -3,9 +3,9 @@ apply plugin: 'com.android.application'
 android {
     defaultConfig {
         applicationId "cz.pstehlik.wifiteplomer"
-        minSdkVersion 16
-        targetSdkVersion 33
-        compileSdk 33
+        minSdkVersion 21
+        targetSdkVersion 34
+        compileSdk 34
     }
 
     buildTypes {
