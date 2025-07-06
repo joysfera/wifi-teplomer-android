@@ -81,6 +81,8 @@
                     android:id="@+id/textView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:paddingBottom="10dp"
                     android:text="@string/font_size" />
 
                 <SeekBar
@@ -91,12 +93,6 @@
                     android:max="10"
                     android:progress="0" />
 
-                <View
-                    android:id="@+id/divider2"
-                    android:layout_width="match_parent"
-                    android:layout_height="32dp"
-                    android:background="?android:attr/listDivider"
-                    android:visibility="invisible" />
             </LinearLayout>
 
             <Button
@@ -107,6 +103,13 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/action_save"
                 android:textStyle="bold" />
+
+            <View
+                android:id="@+id/divider2"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible" />
 
             <Button
                 android:id="@+id/select_sensors_button"
