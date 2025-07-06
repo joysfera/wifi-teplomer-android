@@ -122,7 +122,7 @@ public class SelectSensorActivity extends AppCompatActivity {
 
         } catch (JSONException e) {
             Log.e(TAG, "Error parsing JSON: " + e.getMessage());
-            Toast.makeText(this, "Error parsing data", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -169,7 +169,7 @@ public class SelectSensorActivity extends AppCompatActivity {
 
         teplotyPrefs.edit().putString("selected_sensors", jsonArray.toString()).apply();
 
-        Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, R.string.saved, Toast.LENGTH_LONG).show();
         Log.d(TAG, selectedItems.toString());
     }
 

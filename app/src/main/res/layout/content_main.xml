@@ -8,63 +8,72 @@
     tools:context="cz.pstehlik.wifiteplomer.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        tools:ignore="MissingConstraints">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/description1"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="6sp"
-            android:paddingVertical="3sp"
-            android:text="@string/description1"
-            android:textSize="16sp" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            tools:ignore="MissingConstraints">
 
-        <Button
-            android:id="@+id/buttonWebsite"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="visitWeb"
-            android:text="@string/visit_web" />
+            <TextView
+                android:id="@+id/description1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="6sp"
+                android:paddingVertical="3sp"
+                android:text="@string/description1"
+                android:textSize="16sp" />
 
-        <TextView
-            android:id="@+id/description2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="6sp"
-            android:paddingVertical="3sp"
-            android:text="@string/description2"
-            android:textSize="16sp" />
+            <Button
+                android:id="@+id/buttonWebsite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:onClick="visitWeb"
+                android:text="@string/visit_web" />
 
-        <TextView
-            android:id="@+id/description3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="6sp"
-            android:paddingVertical="3sp"
-            android:text="@string/description3"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/description2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="6sp"
+                android:paddingVertical="3sp"
+                android:text="@string/description2"
+                android:textSize="16sp" />
 
-        <TextView
-            android:id="@+id/description4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="6sp"
-            android:paddingVertical="3sp"
-            android:text="@string/description4"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/description3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="6sp"
+                android:paddingVertical="3sp"
+                android:text="@string/description3"
+                android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/buttonOK"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:onClick="byeBye"
-            android:text="@string/quit" />
+            <TextView
+                android:id="@+id/description4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="6sp"
+                android:paddingVertical="3sp"
+                android:text="@string/description4"
+                android:textSize="16sp" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/buttonOK"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:onClick="byeBye"
+                android:text="@string/quit" />
+
+        </LinearLayout>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

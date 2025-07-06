@@ -105,14 +105,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/action_sign_in"
+                android:text="@string/action_save"
                 android:textStyle="bold" />
 
             <Button
                 android:id="@+id/select_sensors_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SENSORS" />
+                android:text="@string/title_activity_select_sensor" />
 
         </LinearLayout>
     </ScrollView>
