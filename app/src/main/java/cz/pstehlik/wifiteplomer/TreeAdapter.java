@@ -166,10 +166,18 @@ class TreeAdapter extends BaseExpandableListAdapter {
         TextView childName = convertView.findViewById(R.id.childName);
         CheckBox childCheckbox = convertView.findViewById(R.id.childCheckbox);
 
-        childName.setText(item.getName());
+        String name = item.getName();
+        if (!item.getUnit().isEmpty()) name += " [" + item.getUnit() + "]";
+        childName.setText(name);
+
+        // CRITICAL FIX: Clear the listener before setting the checked state
+        // This prevents the listener from being triggered during view recycling
+        childCheckbox.setOnCheckedChangeListener(null);
+
+        // Set the checkbox state from the data model
         childCheckbox.setChecked(item.isSelected());
 
-        childCheckbox.setOnCheckedChangeListener(null);
+        // Now set the listener after the state is properly set
         childCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             item.setSelected(isChecked);
             // Update the parent group checkbox state

@@ -2,6 +2,7 @@ package cz.pstehlik.wifiteplomer;
 
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -21,8 +22,11 @@ import java.util.Map;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class SelectSensorActivity extends AppCompatActivity {
+import static cz.pstehlik.wifiteplomer.AppWidgetViewsFactory.getWidgetPrefsName;
 
+public class SelectSensorActivity extends AppCompatActivity {
+    private static final String TAG = "SelectSensorActivity";
+    private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
     private ExpandableListView expandableListView;
     private TreeAdapter treeAdapter;
     private List<String> groupList;
@@ -32,6 +36,10 @@ public class SelectSensorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_sensor);
+
+        Intent intent = getIntent();
+        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+        Log.d(TAG, "id = " + appWidgetId);
 
         initViews();
         initData();
@@ -45,7 +53,8 @@ public class SelectSensorActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                collectSelectedItems();
+                saveSelectedItems(getTeplotyPreferences());
+                finish();
             }
         });
     }
@@ -68,7 +77,7 @@ public class SelectSensorActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(Exception e) {
-                        Log.e(getClass().getSimpleName(), "Error downloading data: " + e.getMessage());
+                        Log.e(TAG, "Error downloading data: " + e.getMessage());
                     }
                 });
     }
@@ -81,6 +90,8 @@ public class SelectSensorActivity extends AppCompatActivity {
 
             groupList.clear();
             childMap.clear();
+
+            List<String> selectedSensors = loadSelectedSensors(getTeplotyPreferences());
 
             while (keys.hasNext()) {
                 String groupName = keys.next();
@@ -98,8 +109,10 @@ public class SelectSensorActivity extends AppCompatActivity {
                     int r = item.getInt("r");
 
                     TreeItem treeItem = new TreeItem(id, name, value, unit, r);
+                    if (selectedSensors.contains(id)) treeItem.setSelected(true);
+
                     childList.add(treeItem);
-                    Log.d("SelectSensorActivity", "Added " + treeItem.getName());
+                    Log.d(TAG, "Added " + treeItem.getName());
                 }
 
                 childMap.put(groupName, childList);
@@ -108,7 +121,7 @@ public class SelectSensorActivity extends AppCompatActivity {
             setupExpandableListView();
 
         } catch (JSONException e) {
-            Log.e("JSON_PARSE", "Error parsing JSON: " + e.getMessage());
+            Log.e(TAG, "Error parsing JSON: " + e.getMessage());
             Toast.makeText(this, "Error parsing data", Toast.LENGTH_SHORT).show();
         }
     }
@@ -128,25 +141,39 @@ public class SelectSensorActivity extends AppCompatActivity {
         });
     }
 
-    private void collectSelectedItems() {
-        if (treeAdapter == null) return;
+    public static List<String> loadSelectedSensors(final SharedPreferences teplotyPrefs) {
+        String jsonString = teplotyPrefs.getString("selected_sensors", "");
+        List<String> selectedIds = new ArrayList<>();
+        try {
+            if (jsonString != null && !jsonString.isEmpty()) {
+                JSONArray jsonArray = new JSONArray(jsonString);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    selectedIds.add(jsonArray.getString(i));
+                }
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        Log.d(TAG, selectedIds.toString());
+        return selectedIds;
+    }
 
+    private void saveSelectedItems(final SharedPreferences teplotyPrefs) {
+        if (treeAdapter == null) return;
         List<TreeItem> selectedItems = treeAdapter.getSelectedItems();
 
-        if (selectedItems.isEmpty()) {
-            Toast.makeText(this, "No items selected", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        StringBuilder result = new StringBuilder();
-        result.append("Selected items:\n");
-
+        JSONArray jsonArray = new JSONArray();
         for (TreeItem item : selectedItems) {
-            result.append("- ").append(item.getName())
-                    .append(" (ID: ").append(item.getId()).append(")\n");
+            jsonArray.put(item.getId());
         }
 
-        Toast.makeText(this, result.toString(), Toast.LENGTH_LONG).show();
-        Log.d("SELECTED_ITEMS", result.toString());
+        teplotyPrefs.edit().putString("selected_sensors", jsonArray.toString()).apply();
+
+        Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show();
+        Log.d(TAG, selectedItems.toString());
+    }
+
+    private SharedPreferences getTeplotyPreferences() {
+        return getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
     }
 }

@@ -29,6 +29,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -263,16 +264,16 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             instanceData.put(appWidgetId, new ArrayList<>());
             return;
         }
-
+        List<String> selectedSensors = SelectSensorActivity.loadSelectedSensors(context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0));
         String jsonResult = performHttpRequestWithRetry(url);
         if (jsonResult != null) {
-            processJsonData(jsonResult);
+            processJsonData(jsonResult, selectedSensors);
         } else {
             instanceData.put(appWidgetId, new ArrayList<>());
         }
     }
 
-    private void processJsonData(String json) {
+    private void processJsonData(String json, List<String> selectedSensors) {
         if (json.isEmpty()) {
             instanceData.put(appWidgetId, new ArrayList<>());
             return;
@@ -294,8 +295,10 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
                 for (int position = 0; position < list.size(); position++) {
                     DataEntry x = getDataEntry(node, list.get(position));
+                    if (!selectedSensors.isEmpty() && !selectedSensors.contains(x.id)) continue;     // skip sensor if it's not selected
                     SpannableStringBuilder s = new SpannableStringBuilder();
                     s.append(x.value);
+                    // merge multiple sensors of the same name on one line
                     int pos = position + 1;
                     while (pos < list.size()) {
                         DataEntry y = getDataEntry(node, list.get(pos));
