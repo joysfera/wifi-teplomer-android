@@ -4,8 +4,8 @@ android {
     defaultConfig {
         applicationId "cz.pstehlik.wifiteplomer"
         minSdkVersion 21
-        targetSdkVersion 34
-        compileSdk 34
+        targetSdkVersion 36
+        compileSdk 36
     }
 
     buildTypes {
@@ -19,5 +19,5 @@ android {
 }
 dependencies {
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
 }
