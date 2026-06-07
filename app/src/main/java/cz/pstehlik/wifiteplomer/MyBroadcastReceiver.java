@@ -46,14 +46,16 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
         if (action.equals(Intent.ACTION_SCREEN_OFF)) {
             Log.d("MyBroadcastReceiver", "ACTION_SCREEN_OFF");
             skipScreenOn = false;
-            // WidgetProvider.turnAlarmOnOff(context, false);
         } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
             Log.d("MyBroadcastReceiver", "ACTION_SCREEN_ON");
-            if (!skipScreenOn)
+            if (!skipScreenOn) {
                 WidgetProvider.turnAlarmOnOff(context, true);
+                WidgetProvider.requestWidgetUpdate(context);
+            }
         } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
             Log.d("MyBroadcastReceiver", "ACTION_USER_PRESENT");
             WidgetProvider.turnAlarmOnOff(context, true);
+            WidgetProvider.requestWidgetUpdate(context);
             skipScreenOn = true;
         }
     }

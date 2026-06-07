@@ -22,35 +22,27 @@ import java.util.Date;
 
 public class WidgetProvider extends AppWidgetProvider {
     public static final String UPDATE_LIST = "UPDATE_LIST";
-    static long lastForcedUpdateAt = 0;
 
-    public static boolean turnAlarmOnOff(Context context, boolean turnOn) {
-        boolean updated = false;
+    public static void turnAlarmOnOff(Context context, boolean turnOn) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) return false;
+        if (alarmManager == null) return;
         PendingIntent pendingIntent = myUpdateIntentAll(context);
         Log.d("WidgetProvider", "turnAlarmOnOff(" + turnOn + ")");
 
         if (turnOn) {
             long interval = 3 * 60 * 1000;
-            long currentTime = SystemClock.elapsedRealtime();
-            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, currentTime + interval, interval, pendingIntent);
+            alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + interval, interval, pendingIntent);
             Log.d("WidgetProvider", "Alarm set");
-            if (currentTime > lastForcedUpdateAt + 30 * 1000) {
-                try {
-                    pendingIntent.send();
-                    lastForcedUpdateAt = currentTime;
-                    Log.d("WidgetProvider", "Forced update");
-                    updated = true;
-                } catch (PendingIntent.CanceledException e) {
-                    Log.wtf("WidgetProvider", "Exception in pendingIntent.send()");
-                }
-            }
         } else {
             alarmManager.cancel(pendingIntent);
             Log.d("WidgetProvider", "Alarm disabled");
         }
-        return updated;
+    }
+
+    public static void requestWidgetUpdate(Context context) {
+        Intent in = new Intent(context, WidgetProvider.class);
+        in.setAction(UPDATE_LIST);
+        context.sendBroadcast(in);
     }
 
     private static PendingIntent myUpdateIntent(Context context, int appWidgetId) {
@@ -80,9 +72,10 @@ public class WidgetProvider extends AppWidgetProvider {
         PendingIntent clickPI = PendingIntent.getBroadcast(context, appWidgetId, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
 
-        // Create an Intent to launch ConfigurationActivity
+        // Create an Intent to launch ConfigurationActivity (new task so back goes to home)
         Intent intent = new Intent(context, LoginActivity.class);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, appWidgetId, intent, PendingIntent.FLAG_IMMUTABLE);
         widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
 
@@ -126,12 +119,9 @@ public class WidgetProvider extends AppWidgetProvider {
             int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
             Log.d("WidgetProvider", "onReceive(UPDATE_LIST, " + appWidgetId +")");
             if (isScreenOn(context)) {
-                // something is calling the updateWidget() twice
-                Log.d("WidgetProvider", "trying to force-enabling timer and re-registering screen intents - maybe unnecessarily?");
-                boolean updated = turnAlarmOnOff(context, true); // try force-enabling the timer in case app was frozen by Android
-                MyBroadcastReceiver.registerScreenReceiver(context); //re-register the screen intents because they tend to stop coming
-                if (!updated)
-                    updateWidget(context, appWidgetId);
+                turnAlarmOnOff(context, true);
+                MyBroadcastReceiver.registerScreenReceiver(context);
+                updateWidget(context, appWidgetId);
             }
             else {
                 Log.d("WidgetProvider", "Screen is OFF so no updating necessary");

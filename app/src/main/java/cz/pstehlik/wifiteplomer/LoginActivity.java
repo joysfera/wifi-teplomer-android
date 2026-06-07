@@ -200,14 +200,9 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     // update widget
                     Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
+                    intent.setAction(WidgetProvider.UPDATE_LIST);
                     if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        // Update only the specific widget
-                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
-                    } else {
-                        // Update all widgets if no specific widget ID
-                        intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-                        int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(new ComponentName(getApplication(), WidgetProvider.class));
-                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
                     }
                     sendBroadcast(intent);
                 }
@@ -243,13 +238,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private void updateWidget() {
         Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
+        intent.setAction(WidgetProvider.UPDATE_LIST);
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
-        } else {
-            intent.setAction("android.appwidget.action.APPWIDGET_UPDATE");
-            int[] ids = AppWidgetManager.getInstance(getApplication()).getAppWidgetIds(
-                    new ComponentName(getApplication(), WidgetProvider.class));
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         }
         sendBroadcast(intent);
     }
