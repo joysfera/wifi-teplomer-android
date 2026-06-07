@@ -70,7 +70,7 @@ class TreeAdapter extends BaseExpandableListAdapter {
         String groupName = (String) getGroup(groupPosition);
 
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.group_item, null);
+            convertView = inflater.inflate(R.layout.group_item, parent, false);
         }
 
         TextView groupTitle = convertView.findViewById(R.id.groupTitle);
@@ -160,7 +160,7 @@ class TreeAdapter extends BaseExpandableListAdapter {
         TreeItem item = (TreeItem) getChild(groupPosition, childPosition);
 
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.child_item, null);
+            convertView = inflater.inflate(R.layout.child_item, parent, false);
         }
 
         TextView childName = convertView.findViewById(R.id.childName);
