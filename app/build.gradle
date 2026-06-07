@@ -6,6 +6,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         compileSdk 36
+        versionCode 24
+        versionName "2.0.2"
     }
 
     buildTypes {
