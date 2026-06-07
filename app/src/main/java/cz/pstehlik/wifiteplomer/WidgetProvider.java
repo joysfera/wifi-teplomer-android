@@ -63,14 +63,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
     private static PendingIntent myUpdateIntentAll(Context context) {
         Intent in = new Intent(context, WidgetProvider.class);
-        in.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         in.setAction(UPDATE_LIST);
-/*
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        ComponentName thisWidget = new ComponentName(context, WidgetProvider.class);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
-        in.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
-*/
         Log.d("WidgetProvider", String.format("myUpdateIntentAll generated to refresh ALL widgets"));
         return PendingIntent.getBroadcast(context, 0, in, PendingIntent.FLAG_IMMUTABLE);
     }
