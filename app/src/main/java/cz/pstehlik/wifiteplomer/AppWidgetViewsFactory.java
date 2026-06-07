@@ -251,7 +251,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public boolean hasStableIds() {
-        return true;
+        return false;
     }
 
     @Override
