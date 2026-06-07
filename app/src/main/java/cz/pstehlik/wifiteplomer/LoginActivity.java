@@ -99,6 +99,7 @@ public class LoginActivity extends AppCompatActivity {
             showAll.setVisibility(View.VISIBLE);
             showAll.setOnClickListener(v -> {
                 getSharedPreferences(storeName, 0).edit().remove("selected_sensors").apply();
+                updateWidget();
                 finish();
             });
         }

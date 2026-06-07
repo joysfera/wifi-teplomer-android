@@ -170,6 +170,7 @@ public class SelectSensorActivity extends AppCompatActivity {
         }
 
         teplotyPrefs.edit().putString("selected_sensors", jsonArray.toString()).apply();
+        WidgetProvider.requestWidgetUpdate(this);
 
         Toast.makeText(this, R.string.saved, Toast.LENGTH_LONG).show();
         Log.d(TAG, selectedItems.toString());
