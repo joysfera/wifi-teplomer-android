@@ -70,7 +70,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             DataEntry d = currentData.get(position);
             final int fontsize = (teplotyPrefs != null) ? teplotyPrefs.getInt("fontsize", -1) : -1;
             if (fontsize >= 0) {
-                float size = Math.round(14 * (float)Math.pow(1.142857143, fontsize));
+                float size = Math.round(14 * getFontScale(fontsize));
                 row.setTextViewTextSize(android.R.id.text1, TypedValue.COMPLEX_UNIT_SP, size);
                 row.setTextViewTextSize(android.R.id.text2, TypedValue.COMPLEX_UNIT_SP, size);
             }
@@ -84,7 +84,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 row.setImageViewResource(R.id.switchIcon,
                     valStr.equals(onStr) ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
                 if (fontsize >= 0) {
-                    int iconSize = Math.round(16 * (float)Math.pow(1.142857143, fontsize));
+                    int iconSize = Math.round(16 * getFontScale(fontsize));
                     row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
                     row.setViewLayoutHeight(R.id.switchIcon, iconSize, TypedValue.COMPLEX_UNIT_DIP);
                 }
@@ -361,6 +361,10 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             instanceData.put(appWidgetId, new ArrayList<>());
             Log.e(TAG, "decode JSON exception: " + e.getMessage());
         }
+    }
+
+    public static float getFontScale(int fontsize) {
+        return (float) Math.pow(1.142857143, fontsize);
     }
 
     private static class DataEntry {

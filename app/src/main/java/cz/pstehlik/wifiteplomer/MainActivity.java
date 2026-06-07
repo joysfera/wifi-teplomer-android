@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         int fontsize = prefs.getInt("fontsize", -1);
         float textSize = -1;
         if (fontsize >= 0)
-            textSize = Math.round(14 * (float)Math.pow(1.142857143, fontsize));
+            textSize = Math.round(14 * AppWidgetViewsFactory.getFontScale(fontsize));
         List<String> selected = SelectSensorActivity.loadSelectedSensors(prefs);
         try {
             JSONObject root = new JSONObject(json);
@@ -205,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                         valView.setImageResource(val > 0 ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
                         valView.setAdjustViewBounds(true);
                         if (textSize > 0) {
-                            int iconDp = Math.round(16 * textSize / 14f);
+                            int iconDp = Math.round(16 * AppWidgetViewsFactory.getFontScale(fontsize));
                             valView.setLayoutParams(new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.WRAP_CONTENT,
                                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iconDp, getResources().getDisplayMetrics())));
