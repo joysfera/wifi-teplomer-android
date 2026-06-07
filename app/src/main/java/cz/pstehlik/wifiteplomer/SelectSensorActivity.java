@@ -65,8 +65,6 @@ public class SelectSensorActivity extends AppCompatActivity {
     }
 
     private void loadJsonData() {
-        Intent intent = getIntent();
-        int appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
         AppWidgetViewsFactory.getTempData(getApplicationContext(), appWidgetId, new AppWidgetViewsFactory.TempDataCallback() {
                     @Override
                     public void onResult(String data) {
