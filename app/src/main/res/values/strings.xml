@@ -26,4 +26,5 @@
     <string name="title_activity_select_sensor">Select Sensors</string>
     <string name="saved">Saved</string>
     <string name="error">Error</string>
+    <string name="no_credentials">Teploty.info not configured</string>
 </resources>

@@ -1,80 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="cz.pstehlik.wifiteplomer.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <ScrollView
+    <ProgressBar
+        android:id="@+id/loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="32dp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/no_credentials"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/no_cred_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/configure_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
 
         <LinearLayout
+            android:id="@+id/sensor_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            tools:ignore="MissingConstraints">
-
-            <TextView
-                android:id="@+id/description1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="6sp"
-                android:paddingVertical="3sp"
-                android:text="@string/description1"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/buttonWebsite"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:onClick="visitWeb"
-                android:text="@string/visit_web" />
-
-            <TextView
-                android:id="@+id/description2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="6sp"
-                android:paddingVertical="3sp"
-                android:text="@string/description2"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/description3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="6sp"
-                android:paddingVertical="3sp"
-                android:text="@string/description3"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/description4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="6sp"
-                android:paddingVertical="3sp"
-                android:text="@string/description4"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/buttonOK"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:onClick="byeBye"
-                android:text="@string/quit" />
-
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
     </ScrollView>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

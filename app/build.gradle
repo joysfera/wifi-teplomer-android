@@ -7,7 +7,7 @@ android {
         targetSdkVersion 36
         compileSdk 36
         versionCode 24
-        versionName "2.0.2"
+        versionName "3.0.0"
     }
 
     buildTypes {

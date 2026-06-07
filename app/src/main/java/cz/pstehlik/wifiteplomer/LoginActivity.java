@@ -57,11 +57,17 @@ public class LoginActivity extends AppCompatActivity {
         });
         mFontSize = findViewById(R.id.fontsize);
 
-        final SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
         Log.d("LoginActivity", String.format("Loading for id %d, prefs = %s", appWidgetId, teplotyPrefs));
-        final String login = teplotyPrefs.getString("login", "");
-        final String pwd = teplotyPrefs.getString("pwd", "");
-        final int fontsize = teplotyPrefs.getInt("fontsize", 0);
+        String login = teplotyPrefs.getString("login", "");
+        String pwd = teplotyPrefs.getString("pwd", "");
+        int fontsize = teplotyPrefs.getInt("fontsize", 0);
+        if (login.isEmpty()) {
+            teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+            login = teplotyPrefs.getString("login", "");
+            pwd = teplotyPrefs.getString("pwd", "");
+            fontsize = teplotyPrefs.getInt("fontsize", 0);
+        }
         mLoginView.setText(login);
         mPasswordView.setText(pwd);
         mFontSize.setProgress(fontsize);
@@ -132,6 +138,12 @@ public class LoginActivity extends AppCompatActivity {
                 e.putString("pwd", password);
                 e.putInt("fontsize", fontsize);
                 e.apply();
+                // share credentials with activity
+                getSharedPreferences("TeplotyPrefs", 0).edit()
+                    .putString("login", login)
+                    .putString("pwd", password)
+                    .putInt("fontsize", fontsize)
+                    .apply();
 
                 if (!o_login.equals(login) || !o_pwd.equals(password)) {
                     // Show a progress spinner, and kick off a background task to
