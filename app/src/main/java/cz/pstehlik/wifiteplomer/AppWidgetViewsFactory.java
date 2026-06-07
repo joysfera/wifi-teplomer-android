@@ -13,6 +13,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -74,9 +75,28 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 row.setTextViewTextSize(android.R.id.text2, TypedValue.COMPLEX_UNIT_SP, size);
             }
             row.setTextViewText(android.R.id.text1, d.name);
-            row.setTextViewText(android.R.id.text2, d.value);
-            Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
-            row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
+            String valStr = d.value.toString();
+            String onStr = context.getString(R.string.value_on);
+            String offStr = context.getString(R.string.value_off);
+            if (valStr.equals(onStr) || valStr.equals(offStr)) {
+                row.setViewVisibility(R.id.switchIcon, View.VISIBLE);
+                row.setViewVisibility(android.R.id.text2, View.GONE);
+                row.setImageViewResource(R.id.switchIcon,
+                    valStr.equals(onStr) ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
+                if (fontsize >= 0) {
+                    int iconSize = Math.round(16 * (float)Math.pow(1.142857143, fontsize));
+                    row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
+                    row.setViewLayoutHeight(R.id.switchIcon, iconSize, TypedValue.COMPLEX_UNIT_DIP);
+                }
+                Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
+                row.setOnClickFillInIntent(R.id.switchIcon, fillInIntent);
+            } else {
+                row.setViewVisibility(R.id.switchIcon, View.GONE);
+                row.setViewVisibility(android.R.id.text2, View.VISIBLE);
+                row.setTextViewText(android.R.id.text2, d.value);
+                Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
+                row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
+            }
         }
 
         // required for the clickIntent in AppWidgetViewsFactory.java to work

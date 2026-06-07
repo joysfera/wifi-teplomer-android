@@ -9,10 +9,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -179,9 +181,6 @@ public class MainActivity extends AppCompatActivity {
                     double val = s.getDouble("v");
                     String unit = s.getString("u");
                     int range = s.getInt("r");
-                    String valStr = unit.isEmpty()
-                        ? getString(val > 0 ? R.string.value_on : R.string.value_off)
-                        : String.format("%.1f %s", val, unit);
 
                     LinearLayout row = new LinearLayout(this);
                     row.setOrientation(LinearLayout.HORIZONTAL);
@@ -196,6 +195,30 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                     });
 
+                    View.OnClickListener graphClick = v -> {
+                        String url = AppWidgetViewsFactory.getTeplotyInfoUrl("graph.php", this, 0) + "&sensor=" + id;
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                    };
+
+                    if (unit.isEmpty()) {
+                        ImageView valView = new ImageView(this);
+                        valView.setImageResource(val > 0 ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
+                        valView.setAdjustViewBounds(true);
+                        if (textSize > 0) {
+                            int iconDp = Math.round(16 * textSize / 14f);
+                            valView.setLayoutParams(new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iconDp, getResources().getDisplayMetrics())));
+                        }
+                        valView.setOnClickListener(graphClick);
+                        row.addView(nameTv);
+                        row.addView(valView);
+                        sensorContainer.addView(row);
+                        continue;
+                    }
+
+                    String valStr = String.format("%.1f %s", val, unit);
+
                     TextView valTv = new TextView(this);
                     valTv.setText(valStr);
                     if (textSize > 0) valTv.setTextSize(textSize);
@@ -203,10 +226,7 @@ public class MainActivity extends AppCompatActivity {
                         valTv.setTextColor(range > 0 ? 0xFFFF0000 : 0xFF0000FF);
                         valTv.setTypeface(null, 1);
                     }
-                    valTv.setOnClickListener(v -> {
-                        String url = AppWidgetViewsFactory.getTeplotyInfoUrl("graph.php", this, 0) + "&sensor=" + id;
-                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    });
+                    valTv.setOnClickListener(graphClick);
 
                     row.addView(nameTv);
                     row.addView(valTv);

@@ -37,12 +37,25 @@
         android:layout_weight="1"
         android:textColor="#000000" />
 
-    <TextView
-        android:id="@android:id/text2"
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="0.9"
-        android:gravity="end"
-        android:textColor="#000000" />
+        android:layout_weight="0.9">
+
+        <TextView
+            android:id="@android:id/text2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textColor="#000000" />
+
+        <ImageView
+            android:id="@+id/switchIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
 </LinearLayout>
