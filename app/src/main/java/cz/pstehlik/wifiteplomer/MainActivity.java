@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,14 +23,18 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -40,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private View noCredentials;
     private ScrollView scroll;
     private ProgressBar loading;
+    private ProgressBar refreshProgress;
+    private long lastUpdateTime = -1;
     private boolean hasCredentials;
 
     private final Runnable refreshTask = new Runnable() {
@@ -47,6 +54,18 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             refreshData();
             handler.postDelayed(this, 60000);
+        }
+    };
+
+    private final Runnable countdownTask = new Runnable() {
+        @Override
+        public void run() {
+            if (lastUpdateTime > 0) {
+                long elapsed = System.currentTimeMillis() - lastUpdateTime;
+                int remaining = Math.max(0, 60 - (int)(elapsed / 1000));
+                refreshProgress.setProgress(remaining);
+            }
+            handler.postDelayed(this, 1000);
         }
     };
 
@@ -60,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
         noCredentials = findViewById(R.id.no_credentials);
         scroll = findViewById(R.id.scroll);
         loading = findViewById(R.id.loading);
+        refreshProgress = findViewById(R.id.refresh_progress);
+        refreshProgress.setProgressTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.toolbar_background)));
 
         Button cfgBtn = findViewById(R.id.configure_btn);
         cfgBtn.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
@@ -106,10 +127,15 @@ public class MainActivity extends AppCompatActivity {
         if (hasCredentials) {
             noCredentials.setVisibility(View.GONE);
             scroll.setVisibility(View.VISIBLE);
+            refreshProgress.setVisibility(View.VISIBLE);
             handler.post(refreshTask);
+            handler.post(countdownTask);
+            if (lastUpdateTime > 0)
+                getSupportActionBar().setTitle(getString(R.string.values_at) + new SimpleDateFormat(" HH:mm", Locale.getDefault()).format(new Date(lastUpdateTime)));
         } else {
             noCredentials.setVisibility(View.VISIBLE);
             scroll.setVisibility(View.GONE);
+            refreshProgress.setVisibility(View.GONE);
             ((TextView) findViewById(R.id.no_cred_text)).setText(R.string.no_credentials);
             ((Button) findViewById(R.id.configure_btn)).setText(R.string.setup_login);
         }
@@ -119,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(refreshTask);
+        handler.removeCallbacks(countdownTask);
     }
 
     private void refreshData() {
@@ -128,8 +155,12 @@ public class MainActivity extends AppCompatActivity {
             public void onResult(String data) {
                 runOnUiThread(() -> {
                     loading.setVisibility(View.GONE);
-                    if (data != null && data.startsWith("{\"cidla"))
+                    if (data != null && data.startsWith("{\"cidla")) {
                         parseAndDisplay(data);
+                        lastUpdateTime = System.currentTimeMillis();
+                        getSupportActionBar().setTitle(getString(R.string.values_at) + new SimpleDateFormat(" HH:mm", Locale.getDefault()).format(new Date(lastUpdateTime)));
+                        refreshProgress.setProgress(60);
+                    }
                 });
             }
 
