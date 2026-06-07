@@ -58,6 +58,7 @@ public class SelectSensorActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 saveSelectedItems(getTeplotyPreferences());
+                setResult(RESULT_OK);
                 finish();
             }
         });

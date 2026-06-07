@@ -114,11 +114,22 @@ public class LoginActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private static final int REQUEST_SELECT_SENSORS = 1;
+
     public void selectSensors(View view) {
         Intent intent = new Intent(this, SelectSensorActivity.class);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_SELECT_SENSORS);
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_SELECT_SENSORS && resultCode == RESULT_OK) {
+            finish();
+        }
+    }
+
     /**
      * Attempts to sign in or register the account specified by the login form.
      * If there are form errors (invalid email, missing fields, etc.), the
