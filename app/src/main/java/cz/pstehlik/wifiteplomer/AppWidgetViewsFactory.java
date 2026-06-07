@@ -1,6 +1,5 @@
 package cz.pstehlik.wifiteplomer;
 
-import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +7,6 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
@@ -28,10 +26,8 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -276,36 +272,9 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     private void updateHeaderTime() {
         updatingHeader.add(appWidgetId);
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         RemoteViews widget = new RemoteViews(context.getPackageName(), widgetLayoutResId());
-        // Re-set the adapter and click intents so they survive the layout replace
-        Intent svcIntent = new Intent(context, WidgetService.class);
-        svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
-        widget.setRemoteAdapter(R.id.temperatures, svcIntent);
-
-        Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
-        clickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        PendingIntent clickPI = PendingIntent.getBroadcast(context, appWidgetId, clickIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-        widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
-
-        Intent cfgIntent = new Intent(context, LoginActivity.class);
-        cfgIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        cfgIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        widget.setOnClickPendingIntent(R.id.configure,
-            PendingIntent.getActivity(context, appWidgetId, cfgIntent, PendingIntent.FLAG_IMMUTABLE));
-
-        Intent updateIntent = new Intent(context, WidgetProvider.class);
-        updateIntent.setAction(WidgetProvider.UPDATE_LIST);
-        updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        widget.setOnClickPendingIntent(R.id.update_list,
-            PendingIntent.getBroadcast(context, appWidgetId, updateIntent, PendingIntent.FLAG_IMMUTABLE));
-
-        // Update the time
-        widget.setTextViewText(R.id.last_update,
-            context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
-        appWidgetManager.updateAppWidget(appWidgetId, widget);
+        WidgetProvider.setWidgetIntents(context, widget, appWidgetId);
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, widget);
         updatingHeader.remove(appWidgetId);
     }
 

@@ -3,7 +3,6 @@ package cz.pstehlik.wifiteplomer;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -198,13 +197,7 @@ public class LoginActivity extends AppCompatActivity {
                     });
                     finish = false;
                 } else {
-                    // update widget
-                    Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
-                    intent.setAction(WidgetProvider.UPDATE_LIST);
-                    if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-                    }
-                    sendBroadcast(intent);
+                    updateWidget();
                 }
             }
             if (finish) finish();

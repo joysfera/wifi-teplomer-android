@@ -45,14 +45,6 @@ public class WidgetProvider extends AppWidgetProvider {
         context.sendBroadcast(in);
     }
 
-    private static PendingIntent myUpdateIntent(Context context, int appWidgetId) {
-        Intent in = new Intent(context, WidgetProvider.class);
-        in.setAction(UPDATE_LIST);
-        in.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        Log.d("WidgetProvider", String.format("myUpdateIntent generated to refresh widget %d in timely manner", appWidgetId));
-        return PendingIntent.getBroadcast(context, appWidgetId, in, PendingIntent.FLAG_IMMUTABLE);
-    }
-
     private static PendingIntent myUpdateIntentAll(Context context) {
         Intent in = new Intent(context, WidgetProvider.class);
         in.setAction(UPDATE_LIST);
@@ -60,30 +52,33 @@ public class WidgetProvider extends AppWidgetProvider {
         return PendingIntent.getBroadcast(context, 0, in, PendingIntent.FLAG_IMMUTABLE);
     }
 
-    private void updateClickIntents(Context context, RemoteViews widget, int appWidgetId) {
+    public static void setWidgetIntents(Context context, RemoteViews widget, int appWidgetId) {
         Intent svcIntent = new Intent(context, WidgetService.class);
         svcIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         svcIntent.setData(Uri.parse(svcIntent.toUri(Intent.URI_INTENT_SCHEME)));
-
         widget.setRemoteAdapter(R.id.temperatures, svcIntent);
 
         Intent clickIntent = new Intent(context, WidgetProvider.class).setAction("SABAKA_KLIK");
         clickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        PendingIntent clickPI = PendingIntent.getBroadcast(context, appWidgetId, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
-        widget.setPendingIntentTemplate(R.id.temperatures, clickPI);
+        widget.setPendingIntentTemplate(R.id.temperatures,
+            PendingIntent.getBroadcast(context, appWidgetId, clickIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE));
 
-        // Create an Intent to launch ConfigurationActivity (new task so back goes to home)
-        Intent intent = new Intent(context, LoginActivity.class);
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, appWidgetId, intent, PendingIntent.FLAG_IMMUTABLE);
-        widget.setOnClickPendingIntent(R.id.configure, pendingIntent);
+        Intent cfgIntent = new Intent(context, LoginActivity.class);
+        cfgIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+        cfgIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        widget.setOnClickPendingIntent(R.id.configure,
+            PendingIntent.getActivity(context, appWidgetId, cfgIntent, PendingIntent.FLAG_IMMUTABLE));
 
-        // Create an Intent to force updating widget
-        widget.setOnClickPendingIntent(R.id.update_list, myUpdateIntent(context, appWidgetId));
+        widget.setOnClickPendingIntent(R.id.update_list,
+            PendingIntent.getBroadcast(context, appWidgetId,
+                new Intent(context, WidgetProvider.class)
+                    .setAction(UPDATE_LIST)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId),
+                PendingIntent.FLAG_IMMUTABLE));
 
-        // update time
-        widget.setTextViewText(R.id.last_update, context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
+        widget.setTextViewText(R.id.last_update,
+            context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
     }
 
     @Override
@@ -200,7 +195,7 @@ public class WidgetProvider extends AppWidgetProvider {
         Log.d("WidgetProvider", "updateListOfWidgets(" + Arrays.toString(appWidgetIds) +")");
         for (int appWidgetId : appWidgetIds) {
             RemoteViews widget = new RemoteViews(context.getPackageName(), wid);
-            updateClickIntents(context, widget, appWidgetId);
+            setWidgetIntents(context, widget, appWidgetId);
             appWidgetManager.updateAppWidget(appWidgetId, widget);
         }
     }

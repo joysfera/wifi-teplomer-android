@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         if (!prefs.getString("login", "").isEmpty()) return;
         AppWidgetManager mgr = AppWidgetManager.getInstance(this);
         for (int id : mgr.getAppWidgetIds(new ComponentName(this, WidgetProvider.class))) {
-            SharedPreferences wp = getSharedPreferences("TeplotyPrefs_" + id, 0);
+            SharedPreferences wp = getSharedPreferences(AppWidgetViewsFactory.getWidgetPrefsName(id), 0);
             String login = wp.getString("login", "");
             if (!login.isEmpty()) {
                 prefs.edit()
