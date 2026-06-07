@@ -57,20 +57,18 @@ public class LoginActivity extends AppCompatActivity {
         });
         mFontSize = findViewById(R.id.fontsize);
 
-        SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
-        Log.d("LoginActivity", String.format("Loading for id %d, prefs = %s", appWidgetId, teplotyPrefs));
-        String login = teplotyPrefs.getString("login", "");
-        String pwd = teplotyPrefs.getString("pwd", "");
-        int fontsize = teplotyPrefs.getInt("fontsize", 0);
-        if (login.isEmpty()) {
+        SharedPreferences teplotyPrefs;
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+            if (teplotyPrefs.getString("login", "").isEmpty())
+                teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+        } else {
             teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
-            login = teplotyPrefs.getString("login", "");
-            pwd = teplotyPrefs.getString("pwd", "");
-            fontsize = teplotyPrefs.getInt("fontsize", 0);
         }
-        mLoginView.setText(login);
-        mPasswordView.setText(pwd);
-        mFontSize.setProgress(fontsize);
+        Log.d("LoginActivity", String.format("Loading for id %d, prefs = %s", appWidgetId, teplotyPrefs));
+        mLoginView.setText(teplotyPrefs.getString("login", ""));
+        mPasswordView.setText(teplotyPrefs.getString("pwd", ""));
+        mFontSize.setProgress(teplotyPrefs.getInt("fontsize", 0));
 
         findViewById(R.id.email_sign_in_button).setOnClickListener(new OnClickListener() {
             @Override
@@ -126,20 +124,19 @@ public class LoginActivity extends AppCompatActivity {
             focusView.requestFocus();
         } else {
             // save credentials
-            final SharedPreferences teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+            final SharedPreferences teplotyPrefs;
+            if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                teplotyPrefs = getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+            } else {
+                teplotyPrefs = getSharedPreferences("TeplotyPrefs", 0);
+            }
             Log.d("LoginActivity", String.format("Saving for id %d, prefs = %s", appWidgetId, teplotyPrefs));
             final String o_login = teplotyPrefs.getString("login", "");
             final String o_pwd = teplotyPrefs.getString("pwd", "");
             final int o_fontsize = teplotyPrefs.getInt("fontsize", 0);
             boolean finish = true;
             if (!o_login.equals(login) || !o_pwd.equals(password) || o_fontsize != fontsize) {
-                SharedPreferences.Editor e = teplotyPrefs.edit();
-                e.putString("login", login);
-                e.putString("pwd", password);
-                e.putInt("fontsize", fontsize);
-                e.apply();
-                // share credentials with activity
-                getSharedPreferences("TeplotyPrefs", 0).edit()
+                teplotyPrefs.edit()
                     .putString("login", login)
                     .putString("pwd", password)
                     .putInt("fontsize", fontsize)

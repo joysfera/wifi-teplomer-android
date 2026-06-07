@@ -172,6 +172,8 @@ public class SelectSensorActivity extends AppCompatActivity {
     }
 
     private SharedPreferences getTeplotyPreferences() {
-        return getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
+            return getSharedPreferences(getWidgetPrefsName(appWidgetId), 0);
+        return getSharedPreferences("TeplotyPrefs", 0);
     }
 }

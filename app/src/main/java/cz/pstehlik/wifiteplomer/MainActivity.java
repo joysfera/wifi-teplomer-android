@@ -89,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
                 prefs.edit()
                     .putString("login", login)
                     .putString("pwd", wp.getString("pwd", ""))
-                    .putInt("fontsize", wp.getInt("fontsize", 0))
                     .apply();
                 break;
             }
