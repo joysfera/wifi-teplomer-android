@@ -20,4 +20,6 @@
     <string name="title_activity_select_sensor">Vybrat čidla</string>
     <string name="saved">Uloženo</string>
     <string name="error">Chyba</string>
+    <string name="no_credentials">Teploty.info není nastaveno</string>
+    <string name="show_all_sensors">Všechna čidla</string>
 </resources>

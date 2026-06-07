@@ -13,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -86,6 +87,18 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        // show "All sensors" button only if a filter was saved
+        String storeName = (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
+            ? getWidgetPrefsName(appWidgetId) : "TeplotyPrefs";
+        Button showAll = findViewById(R.id.show_all_sensors);
+        if (!getSharedPreferences(storeName, 0).getString("selected_sensors", "").isEmpty()) {
+            showAll.setVisibility(View.VISIBLE);
+            showAll.setOnClickListener(v -> {
+                getSharedPreferences(storeName, 0).edit().remove("selected_sensors").apply();
+                finish();
+            });
+        }
     }
 
     public void selectSensors(View view) {

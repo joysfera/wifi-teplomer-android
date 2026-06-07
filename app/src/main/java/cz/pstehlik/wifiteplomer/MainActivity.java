@@ -25,7 +25,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -144,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
         float textSize = -1;
         if (fontsize >= 0)
             textSize = Math.round(14 * (float)Math.pow(1.142857143, fontsize));
+        List<String> selected = SelectSensorActivity.loadSelectedSensors(prefs);
         try {
             JSONObject root = new JSONObject(json);
             JSONObject cidla = root.getJSONObject("cidla");
@@ -151,6 +154,16 @@ public class MainActivity extends AppCompatActivity {
             while (nodes.hasNext()) {
                 String node = (String) nodes.next();
                 JSONArray arr = cidla.getJSONArray(node);
+
+                // collect visible sensors for this node
+                ArrayList<JSONObject> visible = new ArrayList<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject s = arr.getJSONObject(i);
+                    if (!selected.isEmpty() && !selected.contains(s.getString("i")))
+                        continue;
+                    visible.add(s);
+                }
+                if (visible.isEmpty()) continue;
 
                 // node header
                 TextView hdr = new TextView(this);
@@ -160,8 +173,7 @@ public class MainActivity extends AppCompatActivity {
                 hdr.setPadding(8, 24, 8, 4);
                 sensorContainer.addView(hdr);
 
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject s = arr.getJSONObject(i);
+                for (JSONObject s : visible) {
                     String id = s.getString("i");
                     String name = s.getString("n");
                     double val = s.getDouble("v");
