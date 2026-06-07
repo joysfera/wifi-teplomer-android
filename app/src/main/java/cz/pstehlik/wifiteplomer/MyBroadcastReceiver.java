@@ -45,6 +45,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
         if (action == null) return;
         if (action.equals(Intent.ACTION_SCREEN_OFF)) {
             Log.d("MyBroadcastReceiver", "ACTION_SCREEN_OFF");
+            skipScreenOn = false;
             // WidgetProvider.turnAlarmOnOff(context, false);
         } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
             Log.d("MyBroadcastReceiver", "ACTION_SCREEN_ON");
