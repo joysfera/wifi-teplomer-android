@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
@@ -88,6 +89,9 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+        if (getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         // show "All sensors" button only if a filter was saved
         String storeName = (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID)
             ? getWidgetPrefsName(appWidgetId) : "TeplotyPrefs";
@@ -99,6 +103,15 @@ public class LoginActivity extends AppCompatActivity {
                 finish();
             });
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void selectSensors(View view) {
