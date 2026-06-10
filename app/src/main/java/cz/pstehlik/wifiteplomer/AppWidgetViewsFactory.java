@@ -25,16 +25,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -46,7 +42,6 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     private final int appWidgetId;
     private final SharedPreferences teplotyPrefs;
     private static final java.util.Map<Integer, ArrayList<DataEntry>> instanceData = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Set<Integer> updatingHeader = ConcurrentHashMap.newKeySet();
     private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public static String getWidgetPrefsName(int appWidgetId) { return "TeplotyPrefs_" + appWidgetId; }
@@ -286,27 +281,8 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onDataSetChanged() {
-        if (updatingHeader.contains(appWidgetId)) return;
         Log.d(TAG, "onDataSetChanged for " + appWidgetId);
         getTemperatures();
-        updateHeaderTime();
-    }
-
-    private int widgetLayoutResId() {
-        return (context.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-            ? R.layout.widget_night : R.layout.widget;
-    }
-
-    private void updateHeaderTime() {
-        if (!updatingHeader.add(appWidgetId)) return;
-        try {
-            RemoteViews widget = new RemoteViews(context.getPackageName(), widgetLayoutResId());
-            widget.setTextViewText(R.id.last_update,
-                context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
-            AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(appWidgetId, widget);
-        } finally {
-            updatingHeader.remove(appWidgetId);
-        }
     }
 
     private static ArrayList<DataEntry> createErrorList(String message) {
