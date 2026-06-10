@@ -187,7 +187,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
     private boolean isScreenOn(Context context) {
         PowerManager mgr = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        return (mgr != null) && mgr.isScreenOn();
+        return (mgr != null) && mgr.isInteractive();
     }
 
     private void updateListOfWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
