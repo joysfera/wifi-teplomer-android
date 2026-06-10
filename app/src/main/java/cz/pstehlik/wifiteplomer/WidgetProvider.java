@@ -210,7 +210,7 @@ public class WidgetProvider extends AppWidgetProvider {
             appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
         }
         Log.d("WidgetProvider", "updateWidget(" + appWidgetId + ")");
-        updateListOfWidgets(context, appWidgetManager, appWidgetIds);
         appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.temperatures);
+        updateListOfWidgets(context, appWidgetManager, appWidgetIds);
     }
 }
