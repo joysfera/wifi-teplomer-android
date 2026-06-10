@@ -25,14 +25,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -44,7 +46,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     private final int appWidgetId;
     private final SharedPreferences teplotyPrefs;
     private static final java.util.Map<Integer, ArrayList<DataEntry>> instanceData = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Set<Integer> updatingHeader = new HashSet<>();
+    private static final Set<Integer> updatingHeader = ConcurrentHashMap.newKeySet();
     private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public static String getWidgetPrefsName(int appWidgetId) { return "TeplotyPrefs_" + appWidgetId; }
@@ -75,27 +77,32 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 row.setTextViewTextSize(android.R.id.text2, TypedValue.COMPLEX_UNIT_SP, size);
             }
             row.setTextViewText(android.R.id.text1, d.name);
-            String valStr = d.value.toString();
-            String onStr = context.getString(R.string.value_on);
-            String offStr = context.getString(R.string.value_off);
-            if (valStr.equals(onStr) || valStr.equals(offStr)) {
-                row.setViewVisibility(R.id.switchIcon, View.VISIBLE);
-                row.setViewVisibility(android.R.id.text2, View.GONE);
-                row.setImageViewResource(R.id.switchIcon,
-                    valStr.equals(onStr) ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
-                if (fontsize >= 0) {
-                    int iconSize = Math.round(16 * getFontScale(fontsize));
-                    row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
-                    row.setViewLayoutHeight(R.id.switchIcon, iconSize, TypedValue.COMPLEX_UNIT_DIP);
-                }
-                Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
-                row.setOnClickFillInIntent(R.id.switchIcon, fillInIntent);
-            } else {
+            if (d.id.isEmpty()) {
                 row.setViewVisibility(R.id.switchIcon, View.GONE);
-                row.setViewVisibility(android.R.id.text2, View.VISIBLE);
-                row.setTextViewText(android.R.id.text2, d.value);
-                Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
-                row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
+                row.setViewVisibility(android.R.id.text2, View.GONE);
+            } else {
+                String valStr = d.value.toString();
+                String onStr = context.getString(R.string.value_on);
+                String offStr = context.getString(R.string.value_off);
+                if (valStr.equals(onStr) || valStr.equals(offStr)) {
+                    row.setViewVisibility(R.id.switchIcon, View.VISIBLE);
+                    row.setViewVisibility(android.R.id.text2, View.GONE);
+                    row.setImageViewResource(R.id.switchIcon,
+                        valStr.equals(onStr) ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
+                    if (fontsize >= 0) {
+                        int iconSize = Math.round(16 * getFontScale(fontsize));
+                        row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
+                        row.setViewLayoutHeight(R.id.switchIcon, iconSize, TypedValue.COMPLEX_UNIT_DIP);
+                    }
+                    Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
+                    row.setOnClickFillInIntent(R.id.switchIcon, fillInIntent);
+                } else {
+                    row.setViewVisibility(R.id.switchIcon, View.GONE);
+                    row.setViewVisibility(android.R.id.text2, View.VISIBLE);
+                    row.setTextViewText(android.R.id.text2, d.value);
+                    Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
+                    row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
+                }
             }
         }
 
@@ -291,11 +298,21 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     }
 
     private void updateHeaderTime() {
-        updatingHeader.add(appWidgetId);
-        RemoteViews widget = new RemoteViews(context.getPackageName(), widgetLayoutResId());
-        WidgetProvider.setWidgetIntents(context, widget, appWidgetId);
-        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, widget);
-        updatingHeader.remove(appWidgetId);
+        if (!updatingHeader.add(appWidgetId)) return;
+        try {
+            RemoteViews widget = new RemoteViews(context.getPackageName(), widgetLayoutResId());
+            widget.setTextViewText(R.id.last_update,
+                context.getString(R.string.values_at) + new SimpleDateFormat(" HH:mm").format(new Date()));
+            AppWidgetManager.getInstance(context).partiallyUpdateAppWidget(appWidgetId, widget);
+        } finally {
+            updatingHeader.remove(appWidgetId);
+        }
+    }
+
+    private static ArrayList<DataEntry> createErrorList(String message) {
+        ArrayList<DataEntry> list = new ArrayList<>();
+        list.add(new DataEntry("", "", message, new SpannableString(message), ""));
+        return list;
     }
 
     // this method uses intentionally synchronous HTTP downloading so that the widget doesn't start updating before fresh data is finished fetching
@@ -304,7 +321,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         String url = getTeplotyInfoUrl("data2.php", context, appWidgetId);
         Log.d(TAG, "Sync URL = " + url);
         if (url.isEmpty()) {
-            instanceData.put(appWidgetId, new ArrayList<>());
+            instanceData.put(appWidgetId, createErrorList(context.getString(R.string.no_credentials)));
             return;
         }
         List<String> selectedSensors = SelectSensorActivity.loadSelectedSensors(context.getSharedPreferences(getWidgetPrefsName(appWidgetId), 0));
@@ -312,7 +329,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         if (jsonResult != null) {
             processJsonData(jsonResult, selectedSensors);
         } else {
-            instanceData.put(appWidgetId, new ArrayList<>());
+            instanceData.put(appWidgetId, createErrorList(context.getString(R.string.error)));
         }
     }
 
