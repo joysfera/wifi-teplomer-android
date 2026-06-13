@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                     };
 
-                    String trend = prefs.getBoolean("show_trend", true) ? AppWidgetViewsFactory.computeTrend(this, id, val) : "";
+                    String trend = prefs.getBoolean("show_trend", true) ? AppWidgetViewsFactory.computeTrend(this, id, val, unit) : "";
                     if (unit.isEmpty()) {
                         ImageView valView = new ImageView(this);
                         valView.setImageResource(val > 0 ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);

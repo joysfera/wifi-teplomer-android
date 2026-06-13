@@ -245,7 +245,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             String unit = sensor.getString("u");
             int range = sensor.getInt("r");
 
-            String arrow = teplotyPrefs.getBoolean("show_trend", true) ? computeTrend(context, id, value) : "";
+            String arrow = teplotyPrefs.getBoolean("show_trend", true) ? computeTrend(context, id, value, unit) : "";
 
             if (unit.isEmpty()) {
                 unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
@@ -368,7 +368,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return (float) Math.pow(1.142857143, fontsize);
     }
 
-    static String computeTrend(Context ctx, String sensorId, double value) {
+    static String computeTrend(Context ctx, String sensorId, double value, String unit) {
         SharedPreferences prefs = ctx.getSharedPreferences("TrendPrefs", 0);
         String json = prefs.getString(sensorId, "[]");
         JSONArray arr;
@@ -405,7 +405,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         double denom = sumW * sumWX2 - sumWX * sumWX;
         if (denom == 0) return "\u2192 ";
         double slope = (sumW * sumWXY - sumWX * sumWY) / denom;
-        double threshold = Math.max(0.05, Math.abs(value) * 0.005);
+        double threshold = Arrays.asList(INT_UNITS).contains(unit) ? 1.0 : 0.09;
         if (slope > threshold) return "\u2197";
         if (slope < -threshold) return "\u2198";
         return "\u2192";
