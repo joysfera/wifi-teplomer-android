@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -33,6 +34,7 @@ public class LoginActivity extends AppCompatActivity {
     private View mProgressView;
     private View mLoginFormView;
     private SeekBar mFontSize;
+    private CheckBox mShowTrend;
     private int appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
 
     @Override
@@ -70,6 +72,9 @@ public class LoginActivity extends AppCompatActivity {
         mLoginView.setText(teplotyPrefs.getString("login", ""));
         mPasswordView.setText(teplotyPrefs.getString("pwd", ""));
         mFontSize.setProgress(teplotyPrefs.getInt("fontsize", 0));
+
+        mShowTrend = findViewById(R.id.show_trend);
+        mShowTrend.setChecked(teplotyPrefs.getBoolean("show_trend", true));
 
         findViewById(R.id.email_sign_in_button).setOnClickListener(new OnClickListener() {
             @Override
@@ -171,12 +176,15 @@ public class LoginActivity extends AppCompatActivity {
             final String o_login = teplotyPrefs.getString("login", "");
             final String o_pwd = teplotyPrefs.getString("pwd", "");
             final int o_fontsize = teplotyPrefs.getInt("fontsize", 0);
+            final boolean o_showTrend = teplotyPrefs.getBoolean("show_trend", true);
             boolean finish = true;
-            if (!o_login.equals(login) || !o_pwd.equals(password) || o_fontsize != fontsize) {
+            final boolean showTrend = mShowTrend.isChecked();
+            if (!o_login.equals(login) || !o_pwd.equals(password) || o_fontsize != fontsize || o_showTrend != showTrend) {
                 teplotyPrefs.edit()
                     .putString("login", login)
                     .putString("pwd", password)
                     .putInt("fontsize", fontsize)
+                    .putBoolean("show_trend", showTrend)
                     .apply();
 
                 if (!o_login.equals(login) || !o_pwd.equals(password)) {

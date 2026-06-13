@@ -232,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                     };
 
+                    String trend = prefs.getBoolean("show_trend", true) ? AppWidgetViewsFactory.computeTrend(this, id, val) : "";
                     if (unit.isEmpty()) {
                         ImageView valView = new ImageView(this);
                         valView.setImageResource(val > 0 ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
@@ -244,12 +245,23 @@ public class MainActivity extends AppCompatActivity {
                         }
                         valView.setOnClickListener(graphClick);
                         row.addView(nameTv);
-                        row.addView(valView);
+                        if (!trend.isEmpty()) {
+                            LinearLayout iconRow = new LinearLayout(this);
+                            iconRow.setOrientation(LinearLayout.HORIZONTAL);
+                            iconRow.addView(valView);
+                            TextView arrowTv = new TextView(this);
+                            arrowTv.setText(trend);
+                            if (textSize > 0) arrowTv.setTextSize(textSize);
+                            iconRow.addView(arrowTv);
+                            row.addView(iconRow);
+                        } else {
+                            row.addView(valView);
+                        }
                         sensorContainer.addView(row);
                         continue;
                     }
 
-                    String valStr = String.format("%.1f %s", val, unit);
+                    String valStr = AppWidgetViewsFactory.formatValue(val, unit) + (trend.isEmpty() ? "" : " " + trend);
 
                     TextView valTv = new TextView(this);
                     valTv.setText(valStr);

@@ -43,6 +43,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
     private final SharedPreferences teplotyPrefs;
     private static final java.util.Map<Integer, ArrayList<DataEntry>> instanceData = new java.util.concurrent.ConcurrentHashMap<>();
     private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final String[] INT_UNITS = {"ppm", "ppb", "imp", "dBm", "s", "\u00B0"};
 
     public static String getWidgetPrefsName(int appWidgetId) { return "TeplotyPrefs_" + appWidgetId; }
 
@@ -70,6 +71,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 float size = Math.round(14 * getFontScale(fontsize));
                 row.setTextViewTextSize(android.R.id.text1, TypedValue.COMPLEX_UNIT_SP, size);
                 row.setTextViewTextSize(android.R.id.text2, TypedValue.COMPLEX_UNIT_SP, size);
+                row.setTextViewTextSize(R.id.trendArrow, TypedValue.COMPLEX_UNIT_SP, size);
             }
             row.setTextViewText(android.R.id.text1, d.name);
             if (d.id.isEmpty()) {
@@ -89,11 +91,16 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
                         row.setViewLayoutHeight(R.id.switchIcon, iconSize, TypedValue.COMPLEX_UNIT_DIP);
                     }
+                    row.setViewVisibility(R.id.trendArrow,
+                        d.trend.isEmpty() ? View.GONE : View.VISIBLE);
+                    if (!d.trend.isEmpty())
+                        row.setTextViewText(R.id.trendArrow, d.trend);
                     Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
                     row.setOnClickFillInIntent(R.id.switchIcon, fillInIntent);
                 } else {
                     row.setViewVisibility(R.id.switchIcon, View.GONE);
                     row.setViewVisibility(android.R.id.text2, View.VISIBLE);
+                    row.setViewVisibility(R.id.trendArrow, View.GONE);
                     row.setTextViewText(android.R.id.text2, d.value);
                     Intent fillInIntent = new Intent().putExtra("EXTRA_SABAKA_SENSOR", d.id);
                     row.setOnClickFillInIntent(android.R.id.text2, fillInIntent);
@@ -238,20 +245,21 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
             String unit = sensor.getString("u");
             int range = sensor.getInt("r");
 
+            String arrow = teplotyPrefs.getBoolean("show_trend", true) ? computeTrend(context, id, value) : "";
+
             if (unit.isEmpty()) {
                 unit = context.getResources().getString(value > 0 ? R.string.value_on : R.string.value_off);
-                return new DataEntry(node, id, name, new SpannableString(unit), unit);
+                return new DataEntry(node, id, name, new SpannableString(unit), unit, arrow);
             }
             else {
-                final String[] units = {"ppm", "ppb", "imp", "dBm", "s", "°"};
-                String form = Arrays.asList(units).contains(unit) ? "%.0f %s" : "%.1f %s";
-                SpannableString s = new SpannableString(String.format(form, value, unit));
+                String formatted = formatValue(value, unit);
+                SpannableStringBuilder ssb = new SpannableStringBuilder(formatted + (arrow.isEmpty() ? "" : " " + arrow));
                 if (range != 0) {
-                    int len = s.length() - unit.length() - 1;
-                    s.setSpan(new StyleSpan(Typeface.BOLD), 0, len, 0);
-                    s.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, len, 0);
+                    int end = formatted.length();
+                    ssb.setSpan(new StyleSpan(Typeface.BOLD), 0, end, 0);
+                    ssb.setSpan(new ForegroundColorSpan((range > 0) ? Color.RED : Color.BLUE), 0, end, 0);
                 }
-                return new DataEntry(node, id, name, s, unit);
+                return new DataEntry(node, id, name, SpannableString.valueOf(ssb), unit, arrow);
             }
         } catch (JSONException e) {
             Log.e(TAG, "decode JSON exception: " + e.getMessage());
@@ -345,7 +353,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                         } else pos++;
                     }
 
-                    currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit));
+                    currentData.add(new DataEntry(node, x.id, x.name, SpannableString.valueOf(s), x.unit, x.trend));
                 }
             }
             instanceData.put(appWidgetId, currentData);
@@ -360,22 +368,70 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return (float) Math.pow(1.142857143, fontsize);
     }
 
+    static String computeTrend(Context ctx, String sensorId, double value) {
+        SharedPreferences prefs = ctx.getSharedPreferences("TrendPrefs", 0);
+        String json = prefs.getString(sensorId, "[]");
+        JSONArray arr;
+        long now = System.currentTimeMillis();
+        try {
+            arr = new JSONArray(json);
+            long lastTs = arr.length() > 0 ? arr.getJSONArray(arr.length() - 1).getLong(1) : -1;
+            if (lastTs < 0 || now - lastTs >= 50000) {
+                arr.put(new JSONArray().put(value).put(now));
+                if (arr.length() > 5) arr.remove(0);
+                prefs.edit().putString(sensorId, arr.toString()).apply();
+            }
+        } catch (JSONException e) { return ""; }
+        long cutoff = now - 1_800_000;
+        while (arr.length() > 0) {
+            try { if (arr.getJSONArray(0).getLong(1) >= cutoff) break; } catch (JSONException e) { /* old-format entry, will be removed */ }
+            arr.remove(0);
+        }
+        int n = arr.length();
+        if (n < 2) return "";
+        long t0;
+        try { t0 = arr.getJSONArray(0).getLong(1); } catch (JSONException e) { return ""; }
+        double lambda = 0.15, sumW = 0, sumWX = 0, sumWY = 0, sumWXY = 0, sumWX2 = 0;
+        for (int i = 0; i < n; i++) {
+            try {
+                JSONArray pair = arr.getJSONArray(i);
+                double v = pair.getDouble(0);
+                double x = (pair.getLong(1) - t0) / 60000.0; // minutes since first
+                double w = Math.exp(-lambda * x);
+                sumW += w; sumWX += w * x; sumWY += w * v;
+                sumWXY += w * x * v; sumWX2 += w * x * x;
+            } catch (JSONException e) { return ""; }
+        }
+        double denom = sumW * sumWX2 - sumWX * sumWX;
+        if (denom == 0) return "\u2192 ";
+        double slope = (sumW * sumWXY - sumWX * sumWY) / denom;
+        double threshold = Math.max(0.05, Math.abs(value) * 0.005);
+        if (slope > threshold) return "\u2197";
+        if (slope < -threshold) return "\u2198";
+        return "\u2192";
+    }
+
+    static String formatValue(double value, String unit) {
+        String fmt = Arrays.asList(INT_UNITS).contains(unit) ? "%.0f %s" : "%.1f %s";
+        return String.format(fmt, value, unit);
+    }
+
     private static class DataEntry {
         public String node;
         public String id;
         public String name;
         public SpannableString value;
         public String unit;
+        public String trend;
 
-        DataEntry() {
-        }
+        DataEntry() { trend = ""; }
 
         DataEntry(String _node, String _id, String _name, SpannableString _value, String _unit) {
-            node = _node;
-            id = _id;
-            name = _name;
-            value = _value;
-            unit = _unit;
+            this(_node, _id, _name, _value, _unit, "");
+        }
+
+        DataEntry(String _node, String _id, String _name, SpannableString _value, String _unit, String _trend) {
+            node = _node; id = _id; name = _name; value = _value; unit = _unit; trend = _trend;
         }
     }
 }

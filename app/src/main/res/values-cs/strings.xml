@@ -22,4 +22,5 @@
     <string name="error">Chyba</string>
     <string name="no_credentials">Teploty.info není nastaveno</string>
     <string name="show_all_sensors">Všechna čidla</string>
+    <string name="show_trend">Zobrazovat šipky trendu</string>
 </resources>
