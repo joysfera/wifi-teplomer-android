@@ -84,8 +84,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
                 if (valStr.equals(onStr) || valStr.equals(offStr)) {
                     row.setViewVisibility(R.id.switchIcon, View.VISIBLE);
                     row.setViewVisibility(android.R.id.text2, View.GONE);
-                    row.setImageViewResource(R.id.switchIcon,
-                        valStr.equals(onStr) ? R.drawable.ic_switch_on : R.drawable.ic_switch_off);
+                    row.setImageViewResource(R.id.switchIcon, getSwitchIcon(d.id, valStr.equals(onStr)));
                     if (fontsize >= 0) {
                         int iconSize = Math.round(16 * getFontScale(fontsize));
                         row.setBoolean(R.id.switchIcon, "setAdjustViewBounds", true);
@@ -368,6 +367,12 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         return (float) Math.pow(1.142857143, fontsize);
     }
 
+    static int getSwitchIcon(String id, boolean isOn) {
+        boolean relay = id.length() >= 2 && id.charAt(0) == 'f' && id.charAt(1) >= '1' && id.charAt(1) <= '8';
+        if (relay) return isOn ? R.drawable.ic_relay_on : R.drawable.ic_relay_off;
+        return isOn ? R.drawable.ic_switch_on : R.drawable.ic_switch_off;
+    }
+
     static String computeTrend(Context ctx, String sensorId, double value, String unit) {
         SharedPreferences prefs = ctx.getSharedPreferences("TrendPrefs", 0);
         String json = prefs.getString(sensorId, "[]");
@@ -405,7 +410,7 @@ public class AppWidgetViewsFactory implements RemoteViewsService.RemoteViewsFact
         double denom = sumW * sumWX2 - sumWX * sumWX;
         if (denom == 0) return "\u2192 ";
         double slope = (sumW * sumWXY - sumWX * sumWY) / denom;
-        double threshold = Arrays.asList(INT_UNITS).contains(unit) ? 1.0 : 0.09;
+        double threshold = Arrays.asList(INT_UNITS).contains(unit) ? 1.0 : 0.06;
         if (slope > threshold) return "\u2197";
         if (slope < -threshold) return "\u2198";
         return "\u2192";
