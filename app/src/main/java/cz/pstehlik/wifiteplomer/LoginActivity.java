@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+
+import androidx.activity.EdgeToEdge;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
@@ -40,6 +42,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
         // Set up the login form.
         // Get widget ID from intent

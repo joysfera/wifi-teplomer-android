@@ -3,11 +3,11 @@ apply plugin: 'com.android.application'
 android {
     defaultConfig {
         applicationId "cz.pstehlik.wifiteplomer"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 36
         compileSdk 36
-        versionCode 26
-        versionName "3.1.0"
+        versionCode 27
+        versionName "3.2.0"
     }
 
     buildTypes {
@@ -20,6 +20,7 @@ android {
     namespace 'cz.pstehlik.wifiteplomer'
 }
 dependencies {
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.activity:activity:1.9.3'
 }
